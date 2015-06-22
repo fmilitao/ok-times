@@ -1,8 +1,9 @@
 
 module RandomQuestion {
 	
-	//TODO incomplete.
-	const WEIGHTS = // times[x][y]
+	// TODO finish copying table
+	//from http://www.bbc.com/news/blogs-magazine-monitor-28143553
+	let WEIGHTS = // times[x][y]
 		[ //   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12
 			1, 1, 1, 1, 1, 1, 1, 10, 1, 1, 1, // 2
 			1, 1, 10, 1, 30, 30, 30, 30, 1, 1, 10, // 3
@@ -14,10 +15,10 @@ module RandomQuestion {
 			1, 1, 10, 40, 10, 50, 70, 1, 80, 1, 10, // 9
 			1, 1, 10, 40, 10, 50, 70, 1, 80, 1, 10, // 10
 			1, 1, 10, 40, 10, 50, 70, 1, 80, 1, 10, // 11
-			1, 1, 10, 40, 10, 50, 70, 1, 80, 1, 80, // 12
+			1, 1, 10, 40, 10, 50, 50, 70, 60, 10, 80, // 12
 		];
 
-	const MAX = WEIGHTS.reduce((old, curr) => old + curr, 0);
+	let MAX = WEIGHTS.reduce((old, curr) => old + curr, 0);
 
 	export function ask(): [number, number] {
 		// random = [0, 1[
@@ -44,7 +45,7 @@ module SequentialQuestion {
 		const i = aux; // increments to next
 		aux = (aux + 1) % (11 * 11);
 		return [Math.floor(i / 11) + 2, (i % 11) + 2];
-	}
+	};
 };
 
 module Test {
@@ -83,6 +84,69 @@ module Test {
 
 };
 
-// Test.testRandomQuestion();
-// Test.testSequentialQuestion();
+window.onload = function() {
+
+	const W = window.innerWidth - 4;
+	const H = window.innerHeight - 4;
+	const canvas = <HTMLCanvasElement> document.getElementById("canvas");
+	const ctx = <CanvasRenderingContext2D> canvas.getContext("2d");
+
+	canvas.focus();
+	ctx.canvas.width = W;
+	ctx.canvas.height = H;
+	ctx.font = '40pt monospace';
+	// ...
+
+	let val = 0;
+	let res = 0;
+	let str = '';
+	let ask = SequentialQuestion.ask;
+
+	function redraw(){
+		ctx.fillStyle = "#ffffff";
+		ctx.fillRect(0, 0, W, H);
+		ctx.fillStyle = "#000000";
+
+		if (val === res) {
+			const [x, y] = ask();
+			val = 0;
+			res = x * y;
+			str = x + ' * ' + y + ' ?';
+		}
+		ctx.fillText(str, 0, H / 2);
+		if (val !== 0)
+			ctx.fillText('' + val, 0, H / 2 + 50);
+	};
+
+	function keyUp(e: KeyboardEvent) {
+		console.log(e);
+
+		if( e.keyCode === 13 ){ // enter for next question
+			val = 0;
+			res = 0;
+			redraw();
+			return;
+		}
+
+		if( e.keyCode === 81 ){
+			ask = ask === SequentialQuestion.ask ? RandomQuestion.ask : SequentialQuestion.ask;
+			val = 0;
+			res = 0;
+			redraw();
+			return;
+		}
+
+		// key numbers
+		if( e.keyCode >= 48 && e.keyCode <= 57 ){
+			const k = e.keyCode - 48;
+			val = val * 10 + k;
+			redraw();
+			return;
+		}
+	};
+
+	window.addEventListener("keyup", keyUp, true);
+
+    redraw();
+};
 
