@@ -80,6 +80,7 @@ var Test;
 })(Test || (Test = {}));
 ;
 window.onload = function () {
+    var FONT_H = 50;
     var W = window.innerWidth - 4;
     var H = window.innerHeight - 4;
     var canvas = document.getElementById("canvas");
@@ -87,7 +88,7 @@ window.onload = function () {
     canvas.focus();
     ctx.canvas.width = W;
     ctx.canvas.height = H;
-    ctx.font = '40pt monospace';
+    ctx.font = FONT_H + 'pt monospace';
     // ...
     var val = 0;
     var res = 0;
@@ -105,7 +106,7 @@ window.onload = function () {
         }
         ctx.fillText(str, 0, H / 2);
         if (val !== 0)
-            ctx.fillText('' + val, 0, H / 2 + 50);
+            ctx.fillText('' + val, 0, H / 2 + FONT_H);
     }
     ;
     function keyUp(e) {

@@ -86,15 +86,17 @@ module Test {
 
 window.onload = function() {
 
+	const FONT_H = 50;
 	const W = window.innerWidth - 4;
 	const H = window.innerHeight - 4;
 	const canvas = <HTMLCanvasElement> document.getElementById("canvas");
 	const ctx = <CanvasRenderingContext2D> canvas.getContext("2d");
 
 	canvas.focus();
+
 	ctx.canvas.width = W;
 	ctx.canvas.height = H;
-	ctx.font = '40pt monospace';
+	ctx.font = FONT_H+'pt monospace';
 	// ...
 
 	let val = 0;
@@ -115,11 +117,10 @@ window.onload = function() {
 		}
 		ctx.fillText(str, 0, H / 2);
 		if (val !== 0)
-			ctx.fillText('' + val, 0, H / 2 + 50);
+			ctx.fillText('' + val, 0, H / 2 + FONT_H);
 	};
 
 	function keyUp(e: KeyboardEvent) {
-		console.log(e);
 
 		if( e.keyCode === 13 ){ // enter for next question
 			val = 0;
@@ -128,7 +129,7 @@ window.onload = function() {
 			return;
 		}
 
-		if( e.keyCode === 81 ){
+		if( e.keyCode === 81 ){ // 'q' for switching format
 			ask = ask === SequentialQuestion.ask ? RandomQuestion.ask : SequentialQuestion.ask;
 			val = 0;
 			res = 0;
@@ -143,6 +144,7 @@ window.onload = function() {
 			redraw();
 			return;
 		}
+
 	};
 
 	window.addEventListener("keyup", keyUp, true);
