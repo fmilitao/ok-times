@@ -99,56 +99,92 @@ window.onload = function() {
 	ctx.font = FONT_H+'pt monospace';
 	// ...
 
-	let val = 0;
-	let res = 0;
-	let str = '';
+	let val : string = ''; // attempt
+	let res : string = ''; // answer
+	let str : string = ''; // question
+	let wrong : number = 0;
 	let ask = SequentialQuestion.ask;
 
-	function redraw(){
-		ctx.fillStyle = "#ffffff";
-		ctx.fillRect(0, 0, W, H);
-		ctx.fillStyle = "#000000";
+	function nextQuestion(){
+		const [x, y] = ask();
+		val = '';
+		res = (x * y).toString();
+		str = x + ' * ' + y + ' ?';
+	};
 
-		if (val === res) {
-			const [x, y] = ask();
-			val = 0;
-			res = x * y;
-			str = x + ' * ' + y + ' ?';
+	function switchQuestionFormat(){
+		ask = ask === SequentialQuestion.ask ? RandomQuestion.ask : SequentialQuestion.ask;
+		nextQuestion();
+	};
+
+	function addNumber(n : number){
+		const tmp = val + n.toString();
+		//console.log(res+' '+tmp+' '+res.indexOf(tmp));
+		if( res.indexOf(tmp) == -1 ){
+			wrong = 200;
 		}
-		ctx.fillText(str, 0, H / 2);
-		if (val !== 0)
-			ctx.fillText('' + val, 0, H / 2 + FONT_H);
+		val = tmp;
 	};
 
 	function keyUp(e: KeyboardEvent) {
 
-		if( e.keyCode === 13 ){ // enter for next question
-			val = 0;
-			res = 0;
-			redraw();
+		if (e.keyCode === 13) { // <ENTER> for next question
+			nextQuestion();
 			return;
 		}
 
-		if( e.keyCode === 81 ){ // 'q' for switching format
-			ask = ask === SequentialQuestion.ask ? RandomQuestion.ask : SequentialQuestion.ask;
-			val = 0;
-			res = 0;
-			redraw();
+		if (e.keyCode === 81) {  // 'q' for switching format
+			switchQuestionFormat();
 			return;
 		}
 
-		// key numbers
-		if( e.keyCode >= 48 && e.keyCode <= 57 ){
-			const k = e.keyCode - 48;
-			val = val * 10 + k;
-			redraw();
+		if (e.keyCode >= 48 && e.keyCode <= 57) { // numbers
+			addNumber(e.keyCode - 48);
 			return;
 		}
-
 	};
 
 	window.addEventListener("keyup", keyUp, true);
 
-    redraw();
+
+	let past = Date.now()
+	function draw() {
+		const now = Date.now();
+		const dt = now - past;
+		past = now;
+
+		// cleans background
+		ctx.fillStyle = "#ffffff";
+		ctx.fillRect(0, 0, W, H);
+		ctx.fillStyle = "#000000";
+
+		if( wrong > 0 ){
+			ctx.fillStyle = "#ff0000";
+		}else{
+			ctx.fillStyle = "#000000";
+		}
+
+		ctx.fillText(str, 0, H / 2);
+		ctx.fillText(val, 0, H / 2 + FONT_H);
+
+		// should appear as time passes...
+		ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
+		ctx.fillText(res, 0, H / 2 + FONT_H);
+
+		if (val === res) { // got answer right
+			nextQuestion();
+		}
+		if (wrong > 0) {
+			wrong -= dt;
+			if (wrong <= 0){
+				val = '';
+			}
+		}
+
+		requestAnimationFrame(draw);
+	};
+
+	
+    draw();
 };
 

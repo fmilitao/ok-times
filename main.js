@@ -90,49 +90,78 @@ window.onload = function () {
     ctx.canvas.height = H;
     ctx.font = FONT_H + 'pt monospace';
     // ...
-    var val = 0;
-    var res = 0;
-    var str = '';
+    var val = ''; // attempt
+    var res = ''; // answer
+    var str = ''; // question
+    var wrong = 0;
     var ask = SequentialQuestion.ask;
-    function redraw() {
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, W, H);
-        ctx.fillStyle = "#000000";
-        if (val === res) {
-            var _a = ask(), x = _a[0], y = _a[1];
-            val = 0;
-            res = x * y;
-            str = x + ' * ' + y + ' ?';
+    function nextQuestion() {
+        var _a = ask(), x = _a[0], y = _a[1];
+        val = '';
+        res = (x * y).toString();
+        str = x + ' * ' + y + ' ?';
+    }
+    ;
+    function switchQuestionFormat() {
+        ask = ask === SequentialQuestion.ask ? RandomQuestion.ask : SequentialQuestion.ask;
+        nextQuestion();
+    }
+    ;
+    function addNumber(n) {
+        var tmp = val + n.toString();
+        //console.log(res+' '+tmp+' '+res.indexOf(tmp));
+        if (res.indexOf(tmp) == -1) {
+            wrong = 200;
         }
-        ctx.fillText(str, 0, H / 2);
-        if (val !== 0)
-            ctx.fillText('' + val, 0, H / 2 + FONT_H);
+        val = tmp;
     }
     ;
     function keyUp(e) {
-        console.log(e);
         if (e.keyCode === 13) {
-            val = 0;
-            res = 0;
-            redraw();
+            nextQuestion();
             return;
         }
         if (e.keyCode === 81) {
-            ask = ask === SequentialQuestion.ask ? RandomQuestion.ask : SequentialQuestion.ask;
-            val = 0;
-            res = 0;
-            redraw();
+            switchQuestionFormat();
             return;
         }
-        // key numbers
         if (e.keyCode >= 48 && e.keyCode <= 57) {
-            var k = e.keyCode - 48;
-            val = val * 10 + k;
-            redraw();
+            addNumber(e.keyCode - 48);
             return;
         }
     }
     ;
     window.addEventListener("keyup", keyUp, true);
-    redraw();
+    var past = Date.now();
+    function draw() {
+        var now = Date.now();
+        var dt = now - past;
+        past = now;
+        // cleans background
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = "#000000";
+        if (wrong > 0) {
+            ctx.fillStyle = "#ff0000";
+        }
+        else {
+            ctx.fillStyle = "#000000";
+        }
+        ctx.fillText(str, 0, H / 2);
+        ctx.fillText(val, 0, H / 2 + FONT_H);
+        ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
+        ctx.fillText(res, 0, H / 2 + FONT_H);
+        if (val === res) {
+            nextQuestion();
+        }
+        if (wrong > 0) {
+            wrong -= dt;
+            if (wrong <= 0) {
+                val = '';
+            }
+        }
+        requestAnimationFrame(draw);
+    }
+    ;
+    draw();
 };
