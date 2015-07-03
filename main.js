@@ -80,6 +80,14 @@ var Test;
 })(Test || (Test = {}));
 ;
 window.onload = function () {
+    var NORMAL_FONT = {
+        HEIGHT: 50,
+        FONT: 50 + 'pt monospace'
+    };
+    var SMALL_FONT = {
+        HEIGHT: 20,
+        FONT: 20 + 'pt monospace'
+    };
     var FONT_H = 50;
     var W = window.innerWidth - 4;
     var H = window.innerHeight - 4;
@@ -88,32 +96,36 @@ window.onload = function () {
     canvas.focus();
     ctx.canvas.width = W;
     ctx.canvas.height = H;
-    ctx.font = FONT_H + 'pt monospace';
+    ctx.font = NORMAL_FONT.FONT;
     // ...
-    var val = ''; // attempt
-    var res = ''; // answer
-    var str = ''; // question
+    var attempt = '';
+    var answer = '';
+    var question = '';
     var wrong = 0;
+    var timer = 0;
     var ask = SequentialQuestion.ask;
+    var mode = 'SequentialQuestion.ask';
     function nextQuestion() {
         var _a = ask(), x = _a[0], y = _a[1];
-        val = '';
-        res = (x * y).toString();
-        str = x + ' * ' + y + ' ?';
+        attempt = '';
+        answer = (x * y).toString();
+        question = x + ' * ' + y + ' ?';
+        timer = 0;
     }
     ;
     function switchQuestionFormat() {
+        mode = ask === SequentialQuestion.ask ? 'RandomQuestion.ask' : 'SequentialQuestion.ask';
         ask = ask === SequentialQuestion.ask ? RandomQuestion.ask : SequentialQuestion.ask;
         nextQuestion();
     }
     ;
     function addNumber(n) {
-        var tmp = val + n.toString();
+        var tmp = attempt + n.toString();
         //console.log(res+' '+tmp+' '+res.indexOf(tmp));
-        if (res.indexOf(tmp) == -1) {
+        if (answer.indexOf(tmp) == -1) {
             wrong = 200;
         }
-        val = tmp;
+        attempt = tmp;
     }
     ;
     function keyUp(e) {
@@ -147,19 +159,25 @@ window.onload = function () {
         else {
             ctx.fillStyle = "#000000";
         }
-        ctx.fillText(str, 0, H / 2);
-        ctx.fillText(val, 0, H / 2 + FONT_H);
+        ctx.font = NORMAL_FONT.FONT;
+        ctx.fillText(question, 0, H / 2);
+        ctx.fillText(attempt, 0, H / 2 + NORMAL_FONT.HEIGHT);
+        ctx.fillStyle = "rgba(0, 0, 0, " + Math.min(((timer - 2000) / 6000), 0.6) + ")";
+        ctx.fillText(answer, 0, H / 2 + NORMAL_FONT.HEIGHT);
+        // should appear as time passes...
+        ctx.font = SMALL_FONT.FONT;
         ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
-        ctx.fillText(res, 0, H / 2 + FONT_H);
-        if (val === res) {
+        ctx.fillText(mode + ' ' + (Math.round(timer / 1000)) + 's', 0, 0 + SMALL_FONT.HEIGHT);
+        if (attempt === answer) {
             nextQuestion();
         }
         if (wrong > 0) {
             wrong -= dt;
             if (wrong <= 0) {
-                val = '';
+                attempt = '';
             }
         }
+        timer += dt;
         requestAnimationFrame(draw);
     }
     ;

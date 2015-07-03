@@ -27,7 +27,7 @@ module RandomQuestion {
 		let accum = 0;
 		for (let i = 0; i < WEIGHTS.length; ++i) {
 			accum += WEIGHTS[i];
-			if (accum >= rd){
+			if (accum >= rd) {
 				// floor is intentional to ensure 0..11 on same 'x'
 				return [Math.floor(i / 11) + 2, (i % 11) + 2];
 			}
@@ -41,7 +41,7 @@ module RandomQuestion {
 module SequentialQuestion {
 	let aux = 0;
 
-	export function ask () {
+	export function ask() {
 		const i = aux; // increments to next
 		aux = (aux + 1) % (11 * 11);
 		return [Math.floor(i / 11) + 2, (i % 11) + 2];
@@ -86,6 +86,15 @@ module Test {
 
 window.onload = function() {
 
+	const NORMAL_FONT = {
+		HEIGHT: 50,
+		FONT: 50 + 'pt monospace',
+	};
+	const SMALL_FONT = {
+		HEIGHT: 20,
+		FONT: 20 + 'pt monospace',
+	};
+
 	const FONT_H = 50;
 	const W = window.innerWidth - 4;
 	const H = window.innerHeight - 4;
@@ -96,34 +105,38 @@ window.onload = function() {
 
 	ctx.canvas.width = W;
 	ctx.canvas.height = H;
-	ctx.font = FONT_H+'pt monospace';
+	ctx.font = NORMAL_FONT.FONT;
 	// ...
 
-	let val : string = ''; // attempt
-	let res : string = ''; // answer
-	let str : string = ''; // question
-	let wrong : number = 0;
+	let attempt = '';
+	let answer = '';
+	let question = '';
+	let wrong = 0;
+	let timer = 0;
 	let ask = SequentialQuestion.ask;
+	let mode = 'SequentialQuestion.ask';
 
-	function nextQuestion(){
+	function nextQuestion() {
 		const [x, y] = ask();
-		val = '';
-		res = (x * y).toString();
-		str = x + ' * ' + y + ' ?';
+		attempt = '';
+		answer = (x * y).toString();
+		question = x + ' * ' + y + ' ?';
+		timer = 0;
 	};
 
-	function switchQuestionFormat(){
+	function switchQuestionFormat() {
+		mode = ask === SequentialQuestion.ask ? 'RandomQuestion.ask' : 'SequentialQuestion.ask';
 		ask = ask === SequentialQuestion.ask ? RandomQuestion.ask : SequentialQuestion.ask;
 		nextQuestion();
 	};
 
-	function addNumber(n : number){
-		const tmp = val + n.toString();
+	function addNumber(n: number) {
+		const tmp = attempt + n.toString();
 		//console.log(res+' '+tmp+' '+res.indexOf(tmp));
-		if( res.indexOf(tmp) == -1 ){
+		if (answer.indexOf(tmp) == -1) {
 			wrong = 200;
 		}
-		val = tmp;
+		attempt = tmp;
 	};
 
 	function keyUp(e: KeyboardEvent) {
@@ -158,33 +171,40 @@ window.onload = function() {
 		ctx.fillRect(0, 0, W, H);
 		ctx.fillStyle = "#000000";
 
-		if( wrong > 0 ){
+		if (wrong > 0) {
 			ctx.fillStyle = "#ff0000";
-		}else{
+		} else {
 			ctx.fillStyle = "#000000";
 		}
 
-		ctx.fillText(str, 0, H / 2);
-		ctx.fillText(val, 0, H / 2 + FONT_H);
+		ctx.font = NORMAL_FONT.FONT;
+		ctx.fillText(question, 0, H / 2);
+		ctx.fillText(attempt, 0, H / 2 + NORMAL_FONT.HEIGHT);
+
+		ctx.fillStyle = "rgba(0, 0, 0, " + Math.min(((timer - 2000) / 6000), 0.6) + ")";
+		ctx.fillText(answer, 0, H / 2 + NORMAL_FONT.HEIGHT);
 
 		// should appear as time passes...
+		ctx.font = SMALL_FONT.FONT;
 		ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
-		ctx.fillText(res, 0, H / 2 + FONT_H);
+		ctx.fillText(mode + ' ' + (Math.round(timer / 1000)) + 's', 0, 0 + SMALL_FONT.HEIGHT);
 
-		if (val === res) { // got answer right
+		if (attempt === answer) { // got answer right
 			nextQuestion();
 		}
 		if (wrong > 0) {
 			wrong -= dt;
-			if (wrong <= 0){
-				val = '';
+			if (wrong <= 0) {
+				attempt = '';
 			}
 		}
+
+		timer += dt;
 
 		requestAnimationFrame(draw);
 	};
 
-	
+
     draw();
 };
 
