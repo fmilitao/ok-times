@@ -3,19 +3,20 @@ module RandomQuestion {
 	
 	// TODO finish copying table
 	//from http://www.bbc.com/news/blogs-magazine-monitor-28143553
+	// note that '01' (binary notation) is 1. used for matching lengths
 	let WEIGHTS = // times[x][y]
-		[ //   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12
-			1, 1, 1, 1, 1, 1, 1, 10, 1, 1, 1, // 2
-			1, 1, 10, 1, 30, 30, 30, 30, 1, 1, 10, // 3
-			1, 1, 20, 1, 40, 40, 60, 40, 1, 1, 40, // 4
-			1, 1, 1, 1, 1, 10, 10, 10, 1, 1, 30, // 5
-			1, 1, 10, 40, 10, 50, 70, 80, 1, 1, 80, // 6
-			1, 1, 10, 40, 10, 50, 70, 80, 1, 1, 80, // 7
-			1, 1, 10, 60, 80, 80, 90, 90, 1, 1, 80, // 8
-			1, 1, 10, 50, 70, 80, 80, 80, 1, 1, 80, // 9
-			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 10
-			1, 1, 10, 40, 10, 50, 70, 1, 80, 1, 10, // 11
-			1, 1, 10, 40, 10, 50, 70, 70, 60, 10, 80, // 12
+		[ // 2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12
+			01, 01, 01, 01, 01, 01, 01, 10, 01, 01, 01, // 2
+			01, 01, 10, 01, 30, 30, 30, 30, 01, 01, 10, // 3
+			01, 01, 20, 01, 40, 40, 60, 40, 01, 01, 40, // 4
+			01, 01, 01, 01, 01, 10, 10, 10, 01, 01, 30, // 5
+			01, 01, 10, 40, 10, 50, 70, 80, 01, 01, 80, // 6
+			01, 01, 10, 40, 10, 50, 70, 80, 01, 01, 80, // 7
+			01, 01, 10, 60, 80, 80, 90, 90, 01, 01, 80, // 8
+			01, 01, 10, 50, 70, 80, 80, 80, 01, 01, 80, // 9
+			01, 01, 01, 01, 01, 01, 01, 01, 01, 01, 01, // 10
+			01, 01, 10, 40, 10, 50, 70, 01, 80, 01, 10, // 11
+			01, 01, 10, 40, 10, 50, 70, 70, 60, 10, 80, // 12
 		];
 
 	let MAX = WEIGHTS.reduce((old, curr) => old + curr, 0);
@@ -48,6 +49,7 @@ module SequentialQuestion {
 	};
 };
 
+/*
 module Test {
 
 	export function testRandomQuestion() {
@@ -83,8 +85,12 @@ module Test {
 	};
 
 };
+*/
 
 window.onload = function() {
+
+	const W = window.innerWidth;
+    const H = window.innerHeight;
 
 	let score = 0;
 	let help = true;
@@ -112,7 +118,6 @@ window.onload = function() {
 
 	function addNumber(n: number) {
 		const tmp = attempt + n.toString();
-		//console.log(res+' '+tmp+' '+res.indexOf(tmp));
 		if (answer.indexOf(tmp) !== 0) {
 			wrong = 200;
 		}
@@ -142,11 +147,17 @@ window.onload = function() {
 		}
 	};
 
-	const html_question = document.getElementById('question');
 	const html_mode = document.getElementById('mode');
 	const html_score = document.getElementById('score');
+
+	const html_question = document.getElementById('question');
 	const html_attempt = document.getElementById('attempt');
 	const html_answer = document.getElementById('answer');
+
+	// TODO: adjust these
+	html_question.style.paddingTop = '30px';
+	html_attempt.style.paddingTop = '100px';
+	html_answer.style.paddingTop = html_attempt.style.paddingTop;
 
 	let past = Date.now();
 	function draw() {
@@ -163,7 +174,7 @@ window.onload = function() {
 		html_question.innerHTML = question;
 
 		let padded_attempt = attempt;
-		while (padded_attempt.length < answer.length){
+		while (padded_attempt.length < answer.length) {
 			padded_attempt = padded_attempt + ' ';
 		}
 		html_attempt.innerHTML = padded_attempt;
@@ -179,7 +190,7 @@ window.onload = function() {
 		html_score.innerHTML = 'score: ' + score;
 
 		if (attempt === answer) { // got answer right
-			score += 10 + (timer < 9000 ? Math.round( 50*(1-((timer+1)/6000)) ) : 0);
+			score += 10 + (timer < 9000 ? Math.round(50 * (1 - ((timer + 1) / 6000))) : 0);
 			nextQuestion();
 		}
 		if (wrong > 0) {

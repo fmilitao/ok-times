@@ -2,18 +2,19 @@ var RandomQuestion;
 (function (RandomQuestion) {
     // TODO finish copying table
     //from http://www.bbc.com/news/blogs-magazine-monitor-28143553
+    // note that '01' (binary notation) is 1. used for matching lengths
     var WEIGHTS = [
-        1, 1, 1, 1, 1, 1, 1, 10, 1, 1, 1,
-        1, 1, 10, 1, 30, 30, 30, 30, 1, 1, 10,
-        1, 1, 20, 1, 40, 40, 60, 40, 1, 1, 40,
-        1, 1, 1, 1, 1, 10, 10, 10, 1, 1, 30,
-        1, 1, 10, 40, 10, 50, 70, 80, 1, 1, 80,
-        1, 1, 10, 40, 10, 50, 70, 80, 1, 1, 80,
-        1, 1, 10, 60, 80, 80, 90, 90, 1, 1, 80,
-        1, 1, 10, 50, 70, 80, 80, 80, 1, 1, 80,
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        1, 1, 10, 40, 10, 50, 70, 1, 80, 1, 10,
-        1, 1, 10, 40, 10, 50, 70, 70, 60, 10, 80,
+        01, 01, 01, 01, 01, 01, 01, 10, 01, 01, 01,
+        01, 01, 10, 01, 30, 30, 30, 30, 01, 01, 10,
+        01, 01, 20, 01, 40, 40, 60, 40, 01, 01, 40,
+        01, 01, 01, 01, 01, 10, 10, 10, 01, 01, 30,
+        01, 01, 10, 40, 10, 50, 70, 80, 01, 01, 80,
+        01, 01, 10, 40, 10, 50, 70, 80, 01, 01, 80,
+        01, 01, 10, 60, 80, 80, 90, 90, 01, 01, 80,
+        01, 01, 10, 50, 70, 80, 80, 80, 01, 01, 80,
+        01, 01, 01, 01, 01, 01, 01, 01, 01, 01, 01,
+        01, 01, 10, 40, 10, 50, 70, 01, 80, 01, 10,
+        01, 01, 10, 40, 10, 50, 70, 70, 60, 10, 80,
     ];
     var MAX = WEIGHTS.reduce(function (old, curr) { return old + curr; }, 0);
     function ask() {
@@ -45,20 +46,24 @@ var SequentialQuestion;
     ;
 })(SequentialQuestion || (SequentialQuestion = {}));
 ;
-var Test;
-(function (Test) {
-    function testRandomQuestion() {
-        var tmp = {};
-        var i = 10000;
+/*
+module Test {
+
+    export function testRandomQuestion() {
+
+        let tmp = {};
+        let i = 10000;
         while (i-- > 0) {
-            var _a = RandomQuestion.ask(), x = _a[0], y = _a[1];
-            var m = x + '*' + y;
+            const [x, y] = RandomQuestion.ask();
+            const m = x + '*' + y;
             tmp[m] = tmp[m] === undefined ? 0 : tmp[m] + 1;
+            //	console.log(m);
         }
-        for (var i_1 = 2; i_1 <= 12; i_1++) {
-            var s = '';
-            for (var j = 2; j <= 12; j++) {
-                var v = tmp[i_1 + '*' + j];
+
+        for (let i = 2; i <= 12; i++) {
+            let s = '';
+            for (let j = 2; j <= 12; j++) {
+                const v = tmp[i + '*' + j];
                 if (v === undefined)
                     s += '\t' + 0;
                 else
@@ -66,20 +71,21 @@ var Test;
             }
             console.log(s);
         }
-    }
-    Test.testRandomQuestion = testRandomQuestion;
-    ;
-    function testSequentialQuestion() {
-        var i = 12 * 12;
+
+    };
+
+    export function testSequentialQuestion() {
+        let i = 12 * 12;
         while (i-- > 0) {
             console.log(SequentialQuestion.ask());
         }
-    }
-    Test.testSequentialQuestion = testSequentialQuestion;
-    ;
-})(Test || (Test = {}));
-;
+    };
+
+};
+*/
 window.onload = function () {
+    var W = window.innerWidth;
+    var H = window.innerHeight;
     var score = 0;
     var help = true;
     var attempt = '';
@@ -105,7 +111,6 @@ window.onload = function () {
     ;
     function addNumber(n) {
         var tmp = attempt + n.toString();
-        //console.log(res+' '+tmp+' '+res.indexOf(tmp));
         if (answer.indexOf(tmp) !== 0) {
             wrong = 200;
         }
@@ -130,11 +135,15 @@ window.onload = function () {
             return;
         }
     };
-    var html_question = document.getElementById('question');
     var html_mode = document.getElementById('mode');
     var html_score = document.getElementById('score');
+    var html_question = document.getElementById('question');
     var html_attempt = document.getElementById('attempt');
     var html_answer = document.getElementById('answer');
+    // TODO: adjust these
+    html_question.style.paddingTop = '30px';
+    html_attempt.style.paddingTop = '100px';
+    html_answer.style.paddingTop = html_attempt.style.paddingTop;
     var past = Date.now();
     function draw() {
         var now = Date.now();
