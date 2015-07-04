@@ -99,7 +99,7 @@ window.onload = function () {
         var _a = ask(), x = _a[0], y = _a[1];
         attempt = '';
         answer = (x * y).toString();
-        question = x + ' * ' + y + ' ?';
+        question = x + ' &times; ' + y + ' ?';
         timer = 0;
     }
     ;

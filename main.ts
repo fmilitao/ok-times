@@ -106,7 +106,7 @@ window.onload = function() {
 		const [x, y] = ask();
 		attempt = '';
 		answer = (x * y).toString();
-		question = x + ' * ' + y + ' ?';
+		question = x + ' &times; ' + y + ' ?';
 		timer = 0;
 	};
 
