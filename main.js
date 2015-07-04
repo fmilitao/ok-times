@@ -80,26 +80,6 @@ var Test;
 })(Test || (Test = {}));
 ;
 window.onload = function () {
-    var NORMAL_FONT = {
-        HEIGHT: 50,
-        FONT: 50 + 'pt monospace'
-    };
-    var SMALL_FONT = {
-        HEIGHT: 20,
-        FONT: 20 + 'pt monospace'
-    };
-    var BIG_FONT = {
-        HEIGHT: 140,
-        FONT: 140 + 'pt monospace'
-    };
-    var W = window.innerWidth - 4;
-    var H = window.innerHeight - 4;
-    var canvas = document.getElementById("canvas");
-    var ctx = canvas.getContext("2d");
-    canvas.focus();
-    ctx.canvas.width = W;
-    ctx.canvas.height = H;
-    ctx.font = NORMAL_FONT.FONT;
     var score = 0;
     var help = true;
     var attempt = '';
@@ -150,38 +130,38 @@ window.onload = function () {
             return;
         }
     };
-    var width = function (s) { return ctx.measureText(s).width; };
+    var html_question = document.getElementById('question');
+    var html_mode = document.getElementById('mode');
+    var html_score = document.getElementById('score');
+    var html_attempt = document.getElementById('attempt');
+    var html_answer = document.getElementById('answer');
     var past = Date.now();
     function draw() {
         var now = Date.now();
         var dt = now - past;
         past = now;
-        // cleans background
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, W, H);
-        ctx.fillStyle = "#000000";
         if (wrong > 0) {
-            ctx.fillStyle = "#ff0000";
+            html_attempt.style.color = "red";
         }
         else {
-            ctx.fillStyle = "#000000";
+            html_attempt.style.color = "black";
         }
-        ctx.font = NORMAL_FONT.FONT;
-        ctx.fillText(question, (W / 2 - (width(question) / 2)), 0 + 4 * SMALL_FONT.HEIGHT);
-        ctx.font = BIG_FONT.FONT;
-        ctx.fillText(attempt, (W / 2 - (width(answer) / 2)), H / 2);
+        html_question.innerHTML = question;
+        var padded_attempt = attempt;
+        while (padded_attempt.length < answer.length) {
+            padded_attempt = padded_attempt + ' ';
+        }
+        html_attempt.innerHTML = padded_attempt;
         if (help) {
             // help if too much time without correct answer
-            ctx.fillStyle = "rgba(0, 0, 0, " + Math.min(((timer - 4000) / 9000), 0.5) + ")";
-            ctx.fillText(answer, (W / 2 - (width(answer) / 2)), H / 2);
+            html_answer.style.color = "rgba(0, 0, 0, " + Math.min(((timer - 4000) / 9000), 0.5) + ")";
+            html_answer.innerHTML = answer;
         }
         // timer
-        ctx.font = SMALL_FONT.FONT;
-        ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
-        ctx.fillText(mode + (help ? ' (help on) ' : '') + ' ' + (Math.round(timer / 1000)) + 's', 0, 0 + SMALL_FONT.HEIGHT);
-        ctx.fillText('score: ' + score, 0, 0 + 2.5 * SMALL_FONT.HEIGHT);
+        html_mode.innerHTML = mode + (help ? ' (help on) ' : '') + ' ' + (Math.round(timer / 1000)) + 's';
+        html_score.innerHTML = 'score: ' + score;
         if (attempt === answer) {
-            score += 10 + (timer < 9000 ? Math.round(50 * (1 - (timer / 6000))) : 0);
+            score += 10 + (timer < 9000 ? Math.round(50 * (1 - ((timer + 1) / 6000))) : 0);
             nextQuestion();
         }
         if (wrong > 0) {
