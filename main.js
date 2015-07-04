@@ -99,7 +99,7 @@ window.onload = function () {
         var _a = ask(), x = _a[0], y = _a[1];
         attempt = '';
         answer = (x * y).toString();
-        question = x + ' &times; ' + y + ' ?';
+        question = x + ' &times; ' + y;
         timer = 0;
     }
     ;
@@ -141,10 +141,14 @@ window.onload = function () {
     var html_question = document.getElementById('question');
     var html_attempt = document.getElementById('attempt');
     var html_answer = document.getElementById('answer');
-    // TODO: adjust these
-    html_question.style.paddingTop = '10px';
-    html_attempt.style.paddingTop = '100px';
+    // fractions of the H
+    var F = Math.round(H / 12);
+    html_question.style.paddingTop = F + 'px';
+    html_question.style.fontSize = 2 * F + 'px';
+    html_attempt.style.paddingTop = 4 * F + 'px';
+    html_attempt.style.fontSize = 5 * F + 'px';
     html_answer.style.paddingTop = html_attempt.style.paddingTop;
+    html_answer.style.fontSize = html_attempt.style.fontSize;
     var past = Date.now();
     function draw() {
         var now = Date.now();
