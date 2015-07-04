@@ -168,6 +168,13 @@ window.onload = function() {
 	};
 	window.onresize(null);
 
+	html_mode.onclick = function() {
+		switchQuestionFormat();
+	};
+	html_score.onclick = function(){
+		help = !help;
+	};
+
 	let past = Date.now();
 	function draw() {
 		const now = Date.now();
@@ -198,8 +205,8 @@ window.onload = function() {
 
 		// timer
 		const max = 10 + (timer < 6000 ? Math.round(50 * (1 - ((timer + 1) / 6000))) : 0);
-		html_mode.innerHTML = mode + (help ? ' [help on] ' : '');
-		html_score.innerHTML = 'score: ' + score;
+		html_mode.innerHTML = mode;
+		html_score.innerHTML = (help ? ' [help on] ' : '')+'score: ' + score;
 		html_points.innerHTML = 'max. points: '+max + ' (' + (Math.round(timer / 1000)) + 's)';
 
 		if (attempt === answer) { // got answer right

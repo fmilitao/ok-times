@@ -154,6 +154,12 @@ window.onload = function () {
         html_answer.style.fontSize = html_attempt.style.fontSize;
     };
     window.onresize(null);
+    html_mode.onclick = function () {
+        switchQuestionFormat();
+    };
+    html_score.onclick = function () {
+        help = !help;
+    };
     var past = Date.now();
     function draw() {
         var now = Date.now();
@@ -181,8 +187,8 @@ window.onload = function () {
         }
         // timer
         var max = 10 + (timer < 6000 ? Math.round(50 * (1 - ((timer + 1) / 6000))) : 0);
-        html_mode.innerHTML = mode + (help ? ' [help on] ' : '');
-        html_score.innerHTML = 'score: ' + score;
+        html_mode.innerHTML = mode;
+        html_score.innerHTML = (help ? ' [help on] ' : '') + 'score: ' + score;
         html_points.innerHTML = 'max. points: ' + max + ' (' + (Math.round(timer / 1000)) + 's)';
         if (attempt === answer) {
             score += max;
