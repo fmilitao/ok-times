@@ -89,8 +89,14 @@ module Test {
 
 window.onload = function() {
 
-	const W = window.innerWidth;
-    const H = window.innerHeight;
+	const html_mode = document.getElementById('mode');
+	const html_score = document.getElementById('score');
+	const html_points = document.getElementById('points');
+
+	const html_question = document.getElementById('question');
+	const html_attempt = document.getElementById('attempt');
+	const html_answer = document.getElementById('answer');
+	const html_add = document.getElementById('add');
 
 	let score = 0;
 	let help = true;
@@ -101,6 +107,7 @@ window.onload = function() {
 	let timer = 0;
 	let ask = null;
 	let mode = '';
+	let add = 0;
 
 	function nextQuestion() {
 		const [x, y] = ask();
@@ -147,22 +154,19 @@ window.onload = function() {
 		}
 	};
 
-	const html_mode = document.getElementById('mode');
-	const html_score = document.getElementById('score');
-	const html_points = document.getElementById('points');
-
-	const html_question = document.getElementById('question');
-	const html_attempt = document.getElementById('attempt');
-	const html_answer = document.getElementById('answer');
-
-	// fractions of the H
-	const F = Math.round(H / 12);
-	html_question.style.paddingTop = F +'px';
-	html_question.style.fontSize = 2*F + 'px';
-	html_attempt.style.paddingTop = 4*F + 'px';
-	html_attempt.style.fontSize = 5*F + 'px';
-	html_answer.style.paddingTop = html_attempt.style.paddingTop;
-	html_answer.style.fontSize = html_attempt.style.fontSize;
+	window.onresize = function() {
+		const W = window.innerWidth;
+		const H = window.innerHeight;
+		// fractions of the H
+		const F = Math.round(H / 12);
+		html_question.style.paddingTop = F + 'px';
+		html_question.style.fontSize = 2 * F + 'px';
+		html_attempt.style.paddingTop = 4 * F + 'px';
+		html_attempt.style.fontSize = 5 * F + 'px';
+		html_answer.style.paddingTop = html_attempt.style.paddingTop;
+		html_answer.style.fontSize = html_attempt.style.fontSize;
+	};
+	window.onresize(null);
 
 	let past = Date.now();
 	function draw() {
@@ -186,8 +190,10 @@ window.onload = function() {
 
 		if (help) {
 			// help if too much time without correct answer
-			html_answer.style.color = "rgba(0, 0, 0, " + Math.min(((timer - 4000) / 9000), 0.5) + ")";
+			html_answer.style.textShadow = "0px 0px 15px rgba(99, 99, 99, " + Math.min(((timer - 4000) / 9000), 0.5) + ")";
 			html_answer.innerHTML = answer;
+		}else{
+			html_answer.style.textShadow = "none";
 		}
 
 		// timer
@@ -198,12 +204,20 @@ window.onload = function() {
 
 		if (attempt === answer) { // got answer right
 			score += max;
+			add = 1500;
+			html_add.innerHTML = '+' + max+'!';
 			nextQuestion();
 		}
 		if (wrong > 0) {
 			wrong -= dt;
 			if (wrong <= 0) {
 				attempt = '';
+			}
+		}
+		if (add > 0) {
+			add -= dt;
+			if (add <= 0) {
+				html_add.innerHTML = '';
 			}
 		}
 
