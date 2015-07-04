@@ -7,13 +7,24 @@
 		/* canvas { width: 100%; height: 100%; } */
 		.wp1 { position: absolute; width: 100%; }
 		.wp2 { text-align: center; }
+		
 		#hud { 
-			font-weight: bold;
 			position: absolute;
+			bottom: 0; 
 			font-size: 12pt;
 			padding: 5px 5px;
-			color: rgba(0,0,0,0.4);
-			font-family: sans-serif; }
+			color: black;
+			font-family: "Helvetica"; }
+		#hud div { display: inline-block; }
+		#mode { font-weight: bolder; }
+		#score { font-weight: lighter; }
+		#points { right: 0; bottom: 0; position: absolute; 
+		font-size: 12pt;
+			padding: 5px 5px;
+			color: rgba(0,0,0,0.5);
+			font-family: "Helvetica"; 
+			font-weight: lighter;}
+
 			#question { display: inline-block; font-size: 50pt; }
 			#answer { display: inline-block; font-size: 150pt; color: rgba(0,0,0,0.1); }
 			#attempt { display: inline-block; font-size: 150pt; white-space: pre; }
@@ -26,6 +37,7 @@
 			<div id="mode"></div>
 			<div id="score"></div>
 		</div>
+		<div id="points"></div>
 
 		<div class="wp1">
 			<div class="wp2"> 

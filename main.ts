@@ -149,13 +149,14 @@ window.onload = function() {
 
 	const html_mode = document.getElementById('mode');
 	const html_score = document.getElementById('score');
+	const html_points = document.getElementById('points');
 
 	const html_question = document.getElementById('question');
 	const html_attempt = document.getElementById('attempt');
 	const html_answer = document.getElementById('answer');
 
 	// TODO: adjust these
-	html_question.style.paddingTop = '30px';
+	html_question.style.paddingTop = '10px';
 	html_attempt.style.paddingTop = '100px';
 	html_answer.style.paddingTop = html_attempt.style.paddingTop;
 
@@ -186,11 +187,13 @@ window.onload = function() {
 		}
 
 		// timer
-		html_mode.innerHTML = mode + (help ? ' (help on) ' : '') + ' ' + (Math.round(timer / 1000)) + 's';
+		const max = 10 + (timer < 6000 ? Math.round(50 * (1 - ((timer + 1) / 6000))) : 0);
+		html_mode.innerHTML = mode + (help ? ' [help on] ' : '');
 		html_score.innerHTML = 'score: ' + score;
+		html_points.innerHTML = 'max. points: '+max + ' (' + (Math.round(timer / 1000)) + 's)';
 
 		if (attempt === answer) { // got answer right
-			score += 10 + (timer < 9000 ? Math.round(50 * (1 - ((timer + 1) / 6000))) : 0);
+			score += max;
 			nextQuestion();
 		}
 		if (wrong > 0) {
