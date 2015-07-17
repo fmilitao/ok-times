@@ -71,6 +71,7 @@ window.onload = function() {
 	let ask : () => [number,number] = null;
 	let mode = '';
 	let add = 0;
+	let old_x = -1, old_y = -1;
 
 	function nextQuestion() {
 		const [x, y] = ask();
@@ -84,6 +85,12 @@ window.onload = function() {
 		answer = (x * y).toString();
 		question = x + ' &times; ' + y;
 		timer = 0;
+		// if( old_x !== -1 && old_y !== -1 ){
+		// 	Stats.deselect(old_x, old_y);
+		// }
+		old_x = x-2; // shift index to [2,12] range
+		old_y = y-2;
+		Stats.select(old_x, old_y);
 	};
 
 	function switchQuestionFormat() {
@@ -100,9 +107,16 @@ window.onload = function() {
 		attempt = tmp;
 	};
 
+	function deselect(points:number){
+		if (old_x !== -1 && old_y !== -1) {
+			Stats.deselect(old_x, old_y, points);
+		}
+	};
+
 	window.onkeyup = function(e: KeyboardEvent) {
 
 		if (e.keyCode === 13) { // <ENTER> for next question
+			deselect(0);
 			nextQuestion();
 			return;
 		}
@@ -184,6 +198,7 @@ window.onload = function() {
 			score += max;
 			add = 1500;
 			html_add.innerHTML = '+' + max+'!';
+			deselect(max);
 			nextQuestion();
 		}
 		if (wrong > 0) {
@@ -204,9 +219,14 @@ window.onload = function() {
 		requestAnimationFrame(draw);
 	};
 
-	//Stats.init();
-	Stats.remove();
-	//Stats.addPoint(60); // FIXME: tmp
+	Stats.init();
+	//Stats.select(0, 0);
+	//Stats.remove();
+	// Stats.addPoint(60); // FIXME: tmp
+
+	// setTimeout( () => Stats.addPoint(60) , 2000 ); // FIXME: tmp
+	// Stats.addPoint(60); // FIXME: tmp
+	// Stats.addPoint(60); // FIXME: tmp
 
 	switchQuestionFormat();
     draw();

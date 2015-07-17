@@ -17,6 +17,8 @@
     margin: 0;
   }
 
+  .bl{ filter:url(#blur-effect-1);  }
+
 		.wp1 { position: absolute; width: 100%; }
 		.wp2 { text-align: center; }
 		
@@ -48,7 +50,11 @@
 	</head>
 	<body>
 
-	<svg xmlns="http://www.w3.org/2000/svg" version="1.1"></svg>
+	<svg xmlns="http://www.w3.org/2000/svg" version="1.1">
+		<filter id="blur-effect-1">
+        	<feGaussianBlur stdDeviation="2" />
+    	</filter>
+	</svg>
 
 		<div id="hud">
 			<div id="mode"></div>
