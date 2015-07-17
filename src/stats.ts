@@ -10,12 +10,24 @@ module Stats {
 		d3.select('svg').remove();
 	};
 
-	let s: any[] = [];
+	let s: d3.Selection<SVGElement>[] = [];
 
-	export function init(){
+	let W: number, H: number, F: number;
+	let side: number, delta: number;
+	const MAX = 11; // max grid elements X/Y
+
+	function deltaX(i:number){
+		return (W / 2 - ((MAX/2) * (side+delta))) + (i * (delta+side)); // FIXME misaligned
+	};
+	function deltaY(j:number){
+		return (F * 3) + ((MAX-1-j) * (side+delta));
+	};
+
+	export function init(w : number, h : number, f : number){
+		const isResize = (svg !== null);
 		svg = d3.select('svg');
-		svg.attr('width', window.innerWidth-4); //FIXME: remove testing border
-		svg.attr('height', window.innerHeight-4);
+		svg.attr('width', window.innerWidth);
+		svg.attr('height', window.innerHeight);
 
 		queue = [];
 		trans = [];
@@ -23,61 +35,54 @@ module Stats {
 		// 	queue[i] = null;
 		// }
 
-		// FIXME: copy paste from other
-		const W = window.innerWidth;
-		const H = window.innerHeight;
-		// fractions of the H
-		const F = Math.round(H / 12);
+		W = w; H = h; F = f;
+		side = Math.floor((F * 7) / MAX);
+		delta = 5;
 
-		for (var i = 0; i < 11; ++i)
-			for (var j = 0; j < 11; ++j) {
+		// remove all old stuff
+		if( isResize ){
+			for (let i = 0; i < s.length;++i)
+				s[i].remove();
+		}
+
+		for (let i = 0; i < MAX; ++i)
+			for (let j = 0; j < MAX; ++j) {
 				s.push(
 					svg.append("rect")
 						.attr("class", 'bl')
 						.style("fill", "#ff0000")
-						.attr("rx", 15)
-						.attr("ry", 15)
-						.attr("x", (W/2-(5*50)) + (i * (50))) //FIXME not fully aligned!!
-						.attr("y", (F*3) + (j * (50)))
-						.attr("width", 40)
-						.attr("height", 40)
+						.attr("rx", 10)
+						.attr("ry", 10)
+						.attr("x", deltaX(i) )
+						.attr("y", deltaY(j) )
+						.attr("width", side)
+						.attr("height", side)
 						.attr('opacity', 0.1)
 					);
 			}
 	};
 
 	export function select(i:number,j:number){
-		// FIXME: copy paste from other
-		const W = window.innerWidth;
-		const H = window.innerHeight;
-		// fractions of the H
-		const F = Math.round(H / 12);
-		s[(i*11)+j]
+		s[(i * MAX) + j]
 			.transition()
 			.duration(500)
 			.ease("elastic")
-			.attr("x", (W / 2 - (5 * 50)) + (i * (50)) - 5)
-			.attr("y", (F * 3) + (j * (50)) - 5)
-			.attr("width", 50)
-			.attr("height", 50)
+			.attr("x", deltaX(i) - delta)
+			.attr("y", deltaY(j) - delta)
+			.attr("width", side+(delta*2))
+			.attr("height", side + (delta * 2))
 			.attr('opacity', 0.2);
 	};
 
 	export function deselect(i: number, j: number, points:number) {
-		// FIXME: copy paste from other
-		const W = window.innerWidth;
-		const H = window.innerHeight;
-		// fractions of the H
-		const F = Math.round(H / 12);
-
-		s[(i * 11) + j]
+		s[(i * MAX) + j]
 			.transition()
 			.duration(500)
 			.ease("elastic")
-			.attr("x", (W / 2 - (5 * 50)) + (i * (50)))
-			.attr("y", (F * 3) + (j * (50)) )
-			.attr("width", 40)
-			.attr("height", 40)
+			.attr("x", deltaX(i))
+			.attr("y", deltaY(j))
+			.attr("width", side)
+			.attr("height", side)
 			.style("fill", (points > 30 ? "#00ff00" : (points <= 10 ? '#ff0000' : '#ffff00')))
 			.attr('opacity', 0.1);
 	};

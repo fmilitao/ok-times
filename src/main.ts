@@ -85,10 +85,8 @@ window.onload = function() {
 		answer = (x * y).toString();
 		question = x + ' &times; ' + y;
 		timer = 0;
-		// if( old_x !== -1 && old_y !== -1 ){
-		// 	Stats.deselect(old_x, old_y);
-		// }
-		old_x = x-2; // shift index to [2,12] range
+		
+		old_x = x-2; // shift numbers from [2,12] to [0,9] index range
 		old_y = y-2;
 		Stats.select(old_x, old_y);
 	};
@@ -116,7 +114,7 @@ window.onload = function() {
 	window.onkeyup = function(e: KeyboardEvent) {
 
 		if (e.keyCode === 13) { // <ENTER> for next question
-			deselect(0);
+			deselect(0); // give up on this question
 			nextQuestion();
 			return;
 		}
@@ -148,7 +146,10 @@ window.onload = function() {
 		html_attempt.style.fontSize = 5 * F + 'px';
 		html_answer.style.paddingTop = html_attempt.style.paddingTop;
 		html_answer.style.fontSize = html_attempt.style.fontSize;
+
+		Stats.init(W,H,F);
 	};
+
 	window.onresize(null);
 
 	html_mode.onclick = function() {
@@ -192,8 +193,6 @@ window.onload = function() {
 		html_score.innerHTML = (help ? ' [help on] ' : '')+'score: ' + score;
 		html_points.innerHTML = 'max. points: '+max + ' (' + (Math.round(timer / 1000)) + 's)';
 
-		//Stats.updatePoint(max); //FIXME tmp
-
 		if (attempt === answer) { // got answer right
 			score += max;
 			add = 1500;
@@ -219,7 +218,7 @@ window.onload = function() {
 		requestAnimationFrame(draw);
 	};
 
-	Stats.init();
+	//Stats.init();
 	//Stats.select(0, 0);
 	//Stats.remove();
 	// Stats.addPoint(60); // FIXME: tmp
