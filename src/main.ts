@@ -71,7 +71,6 @@ window.onload = function() {
 	let ask : () => [number,number] = null;
 	let mode = '';
 	let add = 0;
-	let old_x = -1, old_y = -1;
 
 	function nextQuestion() {
 		const [x, y] = ask();
@@ -85,10 +84,9 @@ window.onload = function() {
 		answer = (x * y).toString();
 		question = x + ' &times; ' + y;
 		timer = 0;
-		
-		old_x = x-2; // shift numbers from [2,12] to [0,9] index range
-		old_y = y-2;
-		Stats.select(old_x, old_y);
+
+		// shift numbers from [2,12] to [0,9] index range
+		Stats.select(x-2, y-2);
 	};
 
 	function switchQuestionFormat() {
@@ -105,16 +103,10 @@ window.onload = function() {
 		attempt = tmp;
 	};
 
-	function deselect(points:number){
-		if (old_x !== -1 && old_y !== -1) {
-			Stats.deselect(old_x, old_y, points);
-		}
-	};
-
 	window.onkeyup = function(e: KeyboardEvent) {
 
 		if (e.keyCode === 13) { // <ENTER> for next question
-			deselect(0); // give up on this question
+			Stats.deselect(0); // give up on this question
 			nextQuestion();
 			return;
 		}
@@ -197,7 +189,7 @@ window.onload = function() {
 			score += max;
 			add = 1500;
 			html_add.innerHTML = '+' + max+'!';
-			deselect(max);
+			Stats.deselect(max);
 			nextQuestion();
 		}
 		if (wrong > 0) {
