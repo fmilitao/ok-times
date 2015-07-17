@@ -7,17 +7,17 @@ module RandomQuestion {
 	// note that '01' (binary notation) is 1. used for matching lengths
 	let WEIGHTS = // times[x][y]
 		[ // 2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12
-			01, 01, 01, 01, 01, 01, 01, 10, 01, 01, 01, // 2
-			01, 01, 10, 01, 30, 30, 30, 30, 01, 01, 10, // 3
-			01, 01, 20, 01, 40, 40, 60, 40, 01, 01, 40, // 4
-			01, 01, 01, 01, 01, 10, 10, 10, 01, 01, 30, // 5
-			01, 01, 10, 40, 10, 50, 70, 80, 01, 01, 80, // 6
-			01, 01, 10, 40, 10, 50, 70, 80, 01, 01, 80, // 7
-			01, 01, 10, 60, 80, 80, 90, 90, 01, 01, 80, // 8
-			01, 01, 10, 50, 70, 80, 80, 80, 01, 01, 80, // 9
-			01, 01, 01, 01, 01, 01, 01, 01, 01, 01, 01, // 10
-			01, 01, 10, 40, 10, 50, 70, 01, 80, 01, 10, // 11
-			01, 01, 10, 40, 10, 50, 70, 70, 60, 10, 80, // 12
+			10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, // 2
+			10, 10, 10, 10, 30, 30, 30, 30, 10, 10, 10, // 3
+			10, 10, 20, 10, 40, 40, 60, 40, 10, 10, 40, // 4
+			10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 30, // 5
+			10, 10, 10, 40, 10, 50, 70, 80, 10, 10, 80, // 6
+			10, 10, 10, 40, 10, 50, 70, 80, 10, 10, 80, // 7
+			10, 10, 10, 60, 80, 80, 90, 90, 10, 10, 80, // 8
+			10, 10, 10, 50, 70, 80, 80, 80, 10, 10, 80, // 9
+			10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, // 10
+			10, 10, 10, 40, 10, 50, 70, 10, 80, 10, 10, // 11
+			10, 10, 10, 40, 10, 50, 70, 70, 60, 10, 80, // 12
 		];
 
 	let MAX = WEIGHTS.reduce((old, curr) => old + curr, 0);
@@ -43,50 +43,12 @@ module RandomQuestion {
 module SequentialQuestion {
 	let aux = 0;
 
-	export function ask() {
+	export function ask() : [number,number] {
 		const i = aux; // increments to next
 		aux = (aux + 1) % (11 * 11);
 		return [Math.floor(i / 11) + 2, (i % 11) + 2];
 	};
 };
-
-/*
-module Test {
-
-	export function testRandomQuestion() {
-
-		let tmp = {};
-		let i = 10000;
-		while (i-- > 0) {
-			const [x, y] = RandomQuestion.ask();
-			const m = x + '*' + y;
-			tmp[m] = tmp[m] === undefined ? 0 : tmp[m] + 1;
-			//	console.log(m);
-		}
-
-		for (let i = 2; i <= 12; i++) {
-			let s = '';
-			for (let j = 2; j <= 12; j++) {
-				const v = tmp[i + '*' + j];
-				if (v === undefined)
-					s += '\t' + 0;
-				else
-					s += '\t' + v;
-			}
-			console.log(s);
-		}
-
-	};
-
-	export function testSequentialQuestion() {
-		let i = 12 * 12;
-		while (i-- > 0) {
-			console.log(SequentialQuestion.ask());
-		}
-	};
-
-};
-*/
 
 window.onload = function() {
 
@@ -106,12 +68,18 @@ window.onload = function() {
 	let question = '';
 	let wrong = 0;
 	let timer = 0;
-	let ask = null;
+	let ask : () => [number,number] = null;
 	let mode = '';
 	let add = 0;
 
 	function nextQuestion() {
 		const [x, y] = ask();
+		const q = x + ' &times; ' + y;
+		if( q === question ){
+			// same question! try again
+			nextQuestion();
+			return;
+		}
 		attempt = '';
 		answer = (x * y).toString();
 		question = x + ' &times; ' + y;
@@ -210,6 +178,8 @@ window.onload = function() {
 		html_score.innerHTML = (help ? ' [help on] ' : '')+'score: ' + score;
 		html_points.innerHTML = 'max. points: '+max + ' (' + (Math.round(timer / 1000)) + 's)';
 
+		//Stats.updatePoint(max); //FIXME tmp
+
 		if (attempt === answer) { // got answer right
 			score += max;
 			add = 1500;
@@ -233,6 +203,10 @@ window.onload = function() {
 
 		requestAnimationFrame(draw);
 	};
+
+	//Stats.init();
+	Stats.remove();
+	//Stats.addPoint(60); // FIXME: tmp
 
 	switchQuestionFormat();
     draw();

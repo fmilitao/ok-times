@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+        "target": "es5",
+        "module": "commonjs",
+        "declaration": false,
+        "noImplicitAny": true,
+        "removeComments": true,
+        "preserveConstEnums": false,
+        "noLib": false,
+        "outDir": "./bin",
+        "sourceMap": true
+    },
+    "files": [
+        "./src/stats.ts",
+        "./src/main.ts"
+    ]
+}
