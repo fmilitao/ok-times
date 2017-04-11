@@ -1,11 +1,10 @@
 
 module RandomQuestion {
-	
-	// TODO finish copying table
-	//from http://www.bbc.com/news/blogs-magazine-monitor-28143553
-	//from http://www.bbc.com/news/magazine-32299402
-	// note that '01' (binary notation) is 1. used for matching lengths
-	let WEIGHTS = // times[x][y]
+
+	// Weight inspiration from the following sources:
+	// * http://www.bbc.com/news/blogs-magazine-monitor-28143553
+	// * http://www.bbc.com/news/magazine-32299402
+	let WEIGHTS = // usage should be: times[x][y]
 		[ // 2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12
 			10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, // 2
 			10, 10, 10, 10, 30, 30, 30, 30, 10, 10, 10, // 3
@@ -43,14 +42,14 @@ module RandomQuestion {
 module SequentialQuestion {
 	let aux = 0;
 
-	export function ask() : [number,number] {
+	export function ask(): [number, number] {
 		const i = aux; // increments to next
 		aux = (aux + 1) % (11 * 11);
 		return [Math.floor(i / 11) + 2, (i % 11) + 2];
 	};
 };
 
-window.onload = function() {
+window.onload = function () {
 
 	const html_mode = document.getElementById('mode');
 	const html_score = document.getElementById('score');
@@ -68,14 +67,14 @@ window.onload = function() {
 	let question = '';
 	let wrong = 0;
 	let timer = 0;
-	let ask : () => [number,number] = null;
+	let ask: () => [number, number] = null;
 	let mode = '';
 	let add = 0;
 
 	function nextQuestion() {
 		const [x, y] = ask();
 		const q = x + ' &times; ' + y;
-		if( q === question ){
+		if (q === question) {
 			// same question! try again
 			nextQuestion();
 			return;
@@ -86,7 +85,7 @@ window.onload = function() {
 		timer = 0;
 
 		// shift numbers from [2,12] to [0,9] index range
-		Stats.select(x-2, y-2);
+		Stats.select(x - 2, y - 2);
 	};
 
 	function switchQuestionFormat() {
@@ -103,7 +102,7 @@ window.onload = function() {
 		attempt = tmp;
 	};
 
-	window.onkeyup = function(e: KeyboardEvent) {
+	window.onkeyup = function (e: KeyboardEvent) {
 
 		if (e.keyCode === 13) { // <ENTER> for next question
 			Stats.deselect(0); // give up on this question
@@ -127,7 +126,7 @@ window.onload = function() {
 		}
 	};
 
-	window.onresize = function() {
+	window.onresize = function () {
 		const W = window.innerWidth;
 		const H = window.innerHeight;
 		// fractions of the H
@@ -139,15 +138,15 @@ window.onload = function() {
 		html_answer.style.paddingTop = html_attempt.style.paddingTop;
 		html_answer.style.fontSize = html_attempt.style.fontSize;
 
-		Stats.init(W,H,F);
+		Stats.init(W, H, F);
 	};
 
 	window.onresize(null);
 
-	html_mode.onclick = function() {
+	html_mode.onclick = function () {
 		switchQuestionFormat();
 	};
-	html_score.onclick = function(){
+	html_score.onclick = function () {
 		help = !help;
 	};
 
@@ -175,20 +174,20 @@ window.onload = function() {
 			// help if too much time without correct answer
 			html_answer.style.textShadow = "0px 0px 15px rgba(99, 99, 99, " + Math.min(((timer - 4000) / 9000), 0.5) + ")";
 			html_answer.innerHTML = answer;
-		}else{
+		} else {
 			html_answer.style.textShadow = "none";
 		}
 
 		// timer
 		const max = 10 + (timer < 6000 ? Math.round(50 * (1 - ((timer + 1) / 6000))) : 0);
 		html_mode.innerHTML = mode;
-		html_score.innerHTML = (help ? ' [help on] ' : '')+'score: ' + score;
-		html_points.innerHTML = 'max. points: '+max + ' (' + (Math.round(timer / 1000)) + 's)';
+		html_score.innerHTML = (help ? ' [help on] ' : '') + 'score: ' + score;
+		html_points.innerHTML = 'max. points: ' + max + ' (' + (Math.round(timer / 1000)) + 's)';
 
 		if (attempt === answer) { // got answer right
 			score += max;
 			add = 1500;
-			html_add.innerHTML = '+' + max+'!';
+			html_add.innerHTML = '+' + max + '!';
 			Stats.deselect(max);
 			nextQuestion();
 		}
@@ -220,6 +219,6 @@ window.onload = function() {
 	// Stats.addPoint(60); // FIXME: tmp
 
 	switchQuestionFormat();
-    draw();
+	draw();
 };
 

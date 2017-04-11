@@ -1,5 +1,8 @@
 /// <reference path="../lib/d3.d.ts" />
 
+// FIXME use this: import * as d3 from "d3";
+
+
 module Stats {
 
 	let svg: d3.Selection<SVGElement> = null;
