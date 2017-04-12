@@ -25,32 +25,32 @@ module RandomQuestion {
 		// random = [0, 1[
 		const rd = Math.round(MAX * Math.random());
 
-		let accum = 0;
+		let weightsAccum = 0;
 		for (let i = 0; i < WEIGHTS.length; ++i) {
-			accum += WEIGHTS[i];
-			if (accum >= rd) {
+			weightsAccum += WEIGHTS[i];
+			if (weightsAccum >= rd) {
 				// floor is intentional to ensure 0..11 on same 'x'
 				return [Math.floor(i / 11) + 2, (i % 11) + 2];
 			}
 		}
 
-		throw ('Error: did not find question.' + rd + ' ' + MAX + ' ' + accum);
+		throw ('Error: did not find question.' + rd + ' ' + MAX + ' ' + weightsAccum);
 	};
 
 };
 
 module SequentialQuestion {
-	let aux = 0;
+	let questionPosition = 0;
 
 	export function ask(): [number, number] {
-		const i = aux; // increments to next
-		aux = (aux + 1) % (11 * 11);
-		return [Math.floor(i / 11) + 2, (i % 11) + 2];
+		const currentQuestion = questionPosition;
+		// increments to next question
+		questionPosition = (questionPosition + 1) % (11 * 11);
+		return [Math.floor(currentQuestion / 11) + 2, (currentQuestion % 11) + 2];
 	};
 };
 
 window.onload = function () {
-
 	const html_mode = document.getElementById('mode');
 	const html_score = document.getElementById('score');
 	const html_points = document.getElementById('points');
@@ -60,19 +60,21 @@ window.onload = function () {
 	const html_answer = document.getElementById('answer');
 	const html_add = document.getElementById('add');
 
+	let showHintAfterSomeTime = true;
 	let score = 0;
-	let help = true;
+	
 	let attempt = '';
 	let answer = '';
 	let question = '';
-	let wrong = 0;
-	let timer = 0;
-	let ask: () => [number, number] = null;
-	let mode = '';
-	let add = 0;
+	
+	let highlightWrongAnswerTimeout = 0;
+	let addScoreNotificationTimeout = 0;
+	
+	let questionStartTime = Date.now();
+	let multiplicationQuestion = RandomQuestion.ask;
 
 	function nextQuestion() {
-		const [x, y] = ask();
+		const [x, y] = multiplicationQuestion();
 		const q = x + ' &times; ' + y;
 		if (q === question) {
 			// same question! try again
@@ -82,22 +84,21 @@ window.onload = function () {
 		attempt = '';
 		answer = (x * y).toString();
 		question = x + ' &times; ' + y;
-		timer = 0;
+		questionStartTime = Date.now();
 
 		// shift numbers from [2,12] to [0,9] index range
-		Stats.select(x - 2, y - 2);
+		ProgressTracker.select(x - 2, y - 2);
 	};
 
 	function switchQuestionFormat() {
-		mode = ask === RandomQuestion.ask ? 'Sequential' : 'Random';
-		ask = ask === RandomQuestion.ask ? SequentialQuestion.ask : RandomQuestion.ask;
+		multiplicationQuestion = multiplicationQuestion === RandomQuestion.ask ? SequentialQuestion.ask : RandomQuestion.ask;
 		nextQuestion();
 	};
 
 	function addNumber(n: number) {
 		const tmp = attempt + n.toString();
 		if (answer.indexOf(tmp) !== 0) {
-			wrong = 200;
+			highlightWrongAnswerTimeout = 200;
 		}
 		attempt = tmp;
 	};
@@ -111,59 +112,79 @@ window.onload = function () {
 	window.onkeyup = function (e: KeyboardEvent) {
 
 		if (e.keyCode === KEY_ENTER) { // <ENTER> for next question
-			Stats.deselect(0); // give up on this question
+			// give up on this question
+			ProgressTracker.deselect();
 			nextQuestion();
 			return;
 		}
 
 		if (e.keyCode === KEY_H) { // 'h' for help toggle
-			help = !help;
+			showHintAfterSomeTime = !showHintAfterSomeTime;
 			return;
 		}
 
 		if (e.keyCode === KEY_Q) {  // 'q' for switching format
-			Stats.deselect(0); // give up on this question
+			// give up on this question
+			ProgressTracker.deselect();
 			switchQuestionFormat();
 			return;
 		}
 
 		if (e.keyCode >= KEY_0 && e.keyCode <= KEY_9) { // numbers
 			addNumber(e.keyCode - KEY_0);
+			draw();
 			return;
 		}
 	};
 
-	window.onresize = function () {
-		const W = window.innerWidth;
-		const H = window.innerHeight;
-		// fractions of the H
-		const F = Math.round(H / 12);
-		html_question.style.paddingTop = F + 'px';
-		html_question.style.fontSize = 2 * F + 'px';
-		html_attempt.style.paddingTop = 4 * F + 'px';
-		html_attempt.style.fontSize = 5 * F + 'px';
-		html_answer.style.paddingTop = html_attempt.style.paddingTop;
-		html_answer.style.fontSize = html_attempt.style.fontSize;
 
-		Stats.init(W, H, F);
+	window.onresize = function () {
+		// fractions of the height
+		const FRACTIONS = Math.round(window.innerHeight / 13);
+
+		html_question.style.paddingTop = (1 * FRACTIONS) + 'px';
+		html_question.style.fontSize   = (2 * FRACTIONS) + 'px';
+		html_attempt.style.paddingTop  = (4 * FRACTIONS) + 'px';
+		html_attempt.style.fontSize    = (5 * FRACTIONS) + 'px';
+		html_answer.style.paddingTop   = html_attempt.style.paddingTop;
+		html_answer.style.fontSize     = html_attempt.style.fontSize;
+
+		ProgressTracker.init(window.innerWidth, window.innerHeight, FRACTIONS);
 	};
 
+	// hack to force window initialization although it is not a real resize
 	window.onresize(null);
 
-	html_mode.onclick = function () {
-		switchQuestionFormat();
-	};
-	html_score.onclick = function () {
-		help = !help;
+	// click events to toggle question format (when 'mode' is clicked and same for score for hints)
+	html_mode.onclick = switchQuestionFormat;
+	html_score.onclick = () => showHintAfterSomeTime = !showHintAfterSomeTime;
+
+	// control fps when using 'requestAnimationFrame'
+	// from: http://stackoverflow.com/questions/19764018/controlling-fps-with-requestanimationframe
+	function loop(fps: number, callback: () => void): void {
+		let fpsInterval = 1000 / fps;
+		let then = Date.now();
+		let startTime = then;
+
+		function animate() {
+			requestAnimationFrame(animate);
+
+			let now = Date.now();
+			let elapsed = now - then;
+
+			if (elapsed > fpsInterval) {
+				then = now;
+				callback();
+			}
+		}
+
+		animate();
 	};
 
-	let past = Date.now();
 	function draw() {
-		const now = Date.now();
-		const dt = now - past;
-		past = now;
+		const delta = Date.now() - questionStartTime;
 
-		if (wrong > 0) {
+		if (highlightWrongAnswerTimeout > 0) {
 			html_attempt.style.color = "red";
 		} else {
 			html_attempt.style.color = "black";
@@ -171,52 +192,58 @@ window.onload = function () {
 
 		html_question.innerHTML = question;
 
+		// padds the attempt to have the same length as the correct answer
+		// so that a partial match will properly overlap any hint.
+		// CAUTION: this requires a monospace font that has exact same space
+		// for all number characters AND the white space character that is
+		// used for padding. If you change the font to some other, it may
+		// cause the hint to be misaligned with the attempt.
 		let padded_attempt = attempt;
 		while (padded_attempt.length < answer.length) {
 			padded_attempt = padded_attempt + ' ';
 		}
 		html_attempt.innerHTML = padded_attempt;
 
-		if (help) {
+		if (showHintAfterSomeTime) {
 			// help if too much time without correct answer
-			html_answer.style.textShadow = "0px 0px 15px rgba(99, 99, 99, " + Math.min(((timer - 4000) / 9000), 0.5) + ")";
+			html_answer.style.textShadow = "0px 0px 15px rgba(99, 99, 99, " + Math.min(((delta - 4000) / 9000), 0.5) + ")";
 			html_answer.innerHTML = answer;
 		} else {
 			html_answer.style.textShadow = "none";
 		}
 
-		// timer
-		const max = 10 + (timer < 6000 ? Math.round(50 * (1 - ((timer + 1) / 6000))) : 0);
-		html_mode.innerHTML = mode;
-		html_score.innerHTML = (help ? ' [help on] ' : '') + 'score: ' + score;
-		html_points.innerHTML = 'max. points: ' + max + ' (' + (Math.round(timer / 1000)) + 's)';
+		// bottom right corner timer and max score points
+		const maxScore = 10 + (delta < 6000 ? Math.round(50 * (1 - ((delta + 1) / 6000))) : 0);
+		html_mode.innerHTML = multiplicationQuestion === RandomQuestion.ask ? 'Random' : 'Sequential';
+		html_score.innerHTML = (showHintAfterSomeTime ? ' [help on] ' : '') + 'score: ' + score;
+		html_points.innerHTML = 'max. points: ' + maxScore + ' (' + (Math.round(delta / 1000)) + 's)';
 
-		if (attempt === answer) { // got answer right
-			score += max;
-			add = 1500;
-			html_add.innerHTML = '+' + max + '!';
-			Stats.deselect(max);
+		// got right answer
+		if (attempt === answer) {
+			score += maxScore;
+
+			// score increase notification timeout to 1.5s after correct answer
+			addScoreNotificationTimeout = Date.now() + 1500;
+			html_add.innerHTML = '+' + maxScore + '!';
+			
+			ProgressTracker.deselect(maxScore);
 			nextQuestion();
 		}
-		if (wrong > 0) {
-			wrong -= dt;
-			if (wrong <= 0) {
+		if (highlightWrongAnswerTimeout > 0) {
+			highlightWrongAnswerTimeout -= delta;
+			if (highlightWrongAnswerTimeout <= 0) {
 				attempt = '';
 			}
 		}
-		if (add > 0) {
-			add -= dt;
-			if (add <= 0) {
-				html_add.innerHTML = '';
-			}
+		// remove add score notification if we are already past the set timeout
+		if (Date.now() > addScoreNotificationTimeout) {
+			html_add.innerHTML = '';
 		}
-
-		timer += dt;
-
-		requestAnimationFrame(draw);
 	};
 
-	switchQuestionFormat();
-	draw();
+	// get the initial question
+	nextQuestion();
+	// 10 fps ought to be enough?	
+	loop(10, draw);
 };
 
