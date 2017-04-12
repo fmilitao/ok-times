@@ -2,13 +2,12 @@
 
 // FIXME use this: import * as d3 from "d3";
 
-
 module Stats {
 
 	let svg: d3.Selection<SVGElement> = null;
 	let s: d3.Selection<SVGElement>[] = [];
 
-	export function remove(){
+	export function remove() {
 		d3.select('svg').remove();
 	};
 
@@ -17,14 +16,14 @@ module Stats {
 	const MAX = 11; // max grid elements X/Y
 	let selected_x = -1, selected_y = -1;
 
-	function deltaX(i:number){
-		return (W / 2 - ((MAX/2) * (side+delta))) + (i * (delta+side)); // FIXME misaligned
+	function deltaX(i: number) {
+		return (W / 2 - ((MAX / 2) * (side + delta))) + (i * (delta + side)); // FIXME misaligned
 	};
-	function deltaY(j:number){
-		return (F * 3) + ((MAX-1-j) * (side+delta));
+	function deltaY(j: number) {
+		return (F * 3) + ((MAX - 1 - j) * (side + delta));
 	};
 
-	export function init(w : number, h : number, f : number){
+	export function init(w: number, h: number, f: number) {
 		const isResize = (svg !== null);
 		svg = d3.select('svg');
 		svg.attr('width', window.innerWidth);
@@ -50,16 +49,16 @@ module Stats {
 							.attr("y", deltaY(j))
 							.attr("width", side)
 							.attr("height", side)
-						);
-				}else{
+					);
+				} else {
 					// resize
-					if (selected_x === i && selected_y === j ) {
+					if (selected_x === i && selected_y === j) {
 						s[(i * MAX) + j]
 							.attr("x", deltaX(i) - delta)
 							.attr("y", deltaY(j) - delta)
 							.attr("width", side + (delta * 2))
 							.attr("height", side + (delta * 2));
-					}else{
+					} else {
 						s[(i * MAX) + j]
 							.attr("x", deltaX(i))
 							.attr("y", deltaY(j))
@@ -72,22 +71,22 @@ module Stats {
 
 	};
 
-	export function select(i:number,j:number){
+	export function select(i: number, j: number) {
 		s[(i * MAX) + j]
 			.transition()
 			.duration(500)
 			.ease("elastic")
 			.attr("x", deltaX(i) - delta)
 			.attr("y", deltaY(j) - delta)
-			.attr("width", side+(delta*2))
+			.attr("width", side + (delta * 2))
 			.attr("height", side + (delta * 2))
 			.attr('opacity', 0.2);
-		
+
 		selected_x = i;
 		selected_y = j;
 	};
 
-	export function deselect(points:number) {
+	export function deselect(points: number) {
 		const i = selected_x;
 		const j = selected_y;
 		s[(i * MAX) + j]

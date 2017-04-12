@@ -102,26 +102,33 @@ window.onload = function () {
 		attempt = tmp;
 	};
 
+	const KEY_ENTER = 13;
+	const KEY_H = 72;
+	const KEY_Q = 81;
+	const KEY_0 = 48;
+	const KEY_9 = 57;
+
 	window.onkeyup = function (e: KeyboardEvent) {
 
-		if (e.keyCode === 13) { // <ENTER> for next question
+		if (e.keyCode === KEY_ENTER) { // <ENTER> for next question
 			Stats.deselect(0); // give up on this question
 			nextQuestion();
 			return;
 		}
 
-		if (e.keyCode === 72) { // 'h' for help toggle
+		if (e.keyCode === KEY_H) { // 'h' for help toggle
 			help = !help;
 			return;
 		}
 
-		if (e.keyCode === 81) {  // 'q' for switching format
+		if (e.keyCode === KEY_Q) {  // 'q' for switching format
+			Stats.deselect(0); // give up on this question
 			switchQuestionFormat();
 			return;
 		}
 
-		if (e.keyCode >= 48 && e.keyCode <= 57) { // numbers
-			addNumber(e.keyCode - 48);
+		if (e.keyCode >= KEY_0 && e.keyCode <= KEY_9) { // numbers
+			addNumber(e.keyCode - KEY_0);
 			return;
 		}
 	};
@@ -208,15 +215,6 @@ window.onload = function () {
 
 		requestAnimationFrame(draw);
 	};
-
-	//Stats.init();
-	//Stats.select(0, 0);
-	//Stats.remove();
-	// Stats.addPoint(60); // FIXME: tmp
-
-	// setTimeout( () => Stats.addPoint(60) , 2000 ); // FIXME: tmp
-	// Stats.addPoint(60); // FIXME: tmp
-	// Stats.addPoint(60); // FIXME: tmp
 
 	switchQuestionFormat();
 	draw();
