@@ -12,6 +12,7 @@
         "sourceMap": true
     },
     "files": [
+        "./src/speech.ts",
         "./src/stats.ts",
         "./src/main.ts"
     ]

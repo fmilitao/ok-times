@@ -1,6 +1,7 @@
 /// <reference path="../lib/d3.d.ts" />
 
-// FIXME use this: import * as d3 from "d3";
+// FIXME use this instead:
+// import * as d3 from "d3";
 
 module ProgressTracker {
 	// max grid elements per row / column
