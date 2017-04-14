@@ -1,4 +1,49 @@
 
+module Params {
+	// load with default of US english.
+	let locale = "en-US";
+	let timesSymbolText = "times";
+	let readQuestions = true;
+
+	// load from URL, if present
+	const splitParameters = document.URL.split('?');
+	if (splitParameters.length > 1) {
+		for (const parameter of splitParameters[1].split('&')) {
+			const keyValuePair = parameter.split('=');
+			if (keyValuePair.length > 1) {
+				const [key, value] = keyValuePair;
+				switch (key) {
+					case 'locale':
+						locale = value;
+						break;
+					case 'times-symbol-text':
+						timesSymbolText = value;
+						break;
+					case 'read-questions':
+						readQuestions = value.toLowerCase() === 'true';
+						break;
+					default:
+						console.warn(`Ignoring unknown paramter: ${key}=${value}.`);
+						break;
+				}
+			}
+		}
+	}
+
+	export function getReadQuestions() {
+		return readQuestions;
+	}
+
+	export function getLocale() {
+		return locale;
+	}
+
+	export function getTimesSymbolText() {
+		return timesSymbolText;
+	}
+}
+
+
 module RandomQuestion {
 
 	// Weight inspiration from the following sources:
@@ -62,14 +107,14 @@ window.onload = function () {
 
 	let showHintAfterSomeTime = true;
 	let score = 0;
-	
+
 	let attempt = '';
 	let answer = '';
 	let question = '';
-	
+
 	let highlightWrongAnswerTimeout = 0;
 	let addScoreNotificationTimeout = 0;
-	
+
 	let questionStartTime = Date.now();
 	let multiplicationQuestion = RandomQuestion.ask;
 
@@ -81,6 +126,31 @@ window.onload = function () {
 			nextQuestion();
 			return;
 		}
+
+		if (Params.getReadQuestions()) {
+			Speech.abortRecognition();
+
+			Speech.say(
+				`${x} ${Params.getTimesSymbolText()} ${y}`,
+				Params.getLocale(),
+				(event: any) => {
+					// only start recognition after speech ended
+					Speech.initRecognition(
+						Params.getLocale(),
+						function (text: string) {
+							let lastWord: any = text.split(' ');
+							lastWord = lastWord[lastWord.length - 1];
+							const numbersOnly = lastWord.replace(/\D/g, '');
+							if (numbersOnly.length > 0) {
+								addNumber(parseInt(numbersOnly));
+								draw();
+							}
+						}
+					)
+				}
+			);
+		}
+
 		attempt = '';
 		answer = (x * y).toString();
 		question = x + ' &times; ' + y;
@@ -143,11 +213,11 @@ window.onload = function () {
 		const FRACTIONS = Math.round(window.innerHeight / 13);
 
 		html_question.style.paddingTop = (1 * FRACTIONS) + 'px';
-		html_question.style.fontSize   = (2 * FRACTIONS) + 'px';
-		html_attempt.style.paddingTop  = (4 * FRACTIONS) + 'px';
-		html_attempt.style.fontSize    = (5 * FRACTIONS) + 'px';
-		html_answer.style.paddingTop   = html_attempt.style.paddingTop;
-		html_answer.style.fontSize     = html_attempt.style.fontSize;
+		html_question.style.fontSize = (2 * FRACTIONS) + 'px';
+		html_attempt.style.paddingTop = (4 * FRACTIONS) + 'px';
+		html_attempt.style.fontSize = (5 * FRACTIONS) + 'px';
+		html_answer.style.paddingTop = html_attempt.style.paddingTop;
+		html_answer.style.fontSize = html_attempt.style.fontSize;
 
 		ProgressTracker.init(window.innerWidth, window.innerHeight, FRACTIONS);
 	};
@@ -225,7 +295,7 @@ window.onload = function () {
 			// score increase notification timeout to 1.5s after correct answer
 			addScoreNotificationTimeout = Date.now() + 1500;
 			html_add.innerHTML = '+' + maxScore + '!';
-			
+
 			ProgressTracker.deselect(maxScore);
 			nextQuestion();
 		}
