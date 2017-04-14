@@ -13,4 +13,6 @@ Questions can be skipped with `enter`.
 
 For some reason, rendering SVGs with blur in Firefox is horribly slow.
 
+* Speech recognition only works in Chrome.
+* Speech recognition is off while speech synthesis is speaking.
 

@@ -41,6 +41,8 @@
 			padding: 5px 5px;
 			color: black;
 			font-family: "Helvetica";
+			/* ensure above other so that divs are clickable */
+			z-index: 11;
 		}
 		
 		#hud div {
@@ -59,7 +61,34 @@
 			font-weight: lighter;
 			color: green;
 		}
-		
+
+		#listenerStatus {
+			font-weight: bolder;
+			left: 50%;
+			transform: translate(-50%, 0);
+			top: 0;
+			position: absolute;
+			font-size: 14pt;
+			padding: 5px 5px;
+			color: rgba(0, 0, 0, 0.5);
+			font-family: "Helvetica";
+			/* ensure above other so that divs are clickable */
+			z-index: 10;
+		}
+
+		#listenerMode {
+			left: 0;
+			top: 0;
+			position: absolute;
+			font-size: 12pt;
+			padding: 5px 5px;
+			color: rgba(0, 0, 0, 0.5);
+			font-family: "Helvetica";
+			/* ensure above other so that divs are clickable */
+			z-index: 10;
+			font-weight: lighter;
+		}
+
 		#points {
 			right: 0;
 			bottom: 0;
@@ -95,12 +124,15 @@
 
 <body>
 
+	<!-- Needed to have a blur effect on SVG and d3.js -->
 	<svg xmlns="http://www.w3.org/2000/svg" version="1.1">
 		<filter id="blur-effect-1">
 			<feGaussianBlur stdDeviation="2" />
 		</filter>
 	</svg>
 
+	<div id="listenerMode"></div>
+	<div id="listenerStatus"></div>
 	<div id="hud">
 		<div id="mode"></div>
 		<div id="score"></div>
