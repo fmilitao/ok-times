@@ -61,12 +61,12 @@
 			font-weight: lighter;
 			color: green;
 		}
-
+		
 		#listenerStatus {
-			font-weight: bolder;
+			/* font-weight: bolder; */
 			left: 50%;
 			transform: translate(-50%, 0);
-			top: 0;
+			bottom: 0;
 			position: absolute;
 			font-size: 14pt;
 			padding: 5px 5px;
@@ -75,20 +75,23 @@
 			/* ensure above other so that divs are clickable */
 			z-index: 10;
 		}
-
-		#listenerMode {
+		
+		#upperHud {
 			left: 0;
 			top: 0;
 			position: absolute;
-			font-size: 12pt;
+			font-size: 10pt;
 			padding: 5px 5px;
-			color: rgba(0, 0, 0, 0.5);
+			color: rgba(0, 0, 0, 0.4);
 			font-family: "Helvetica";
-			/* ensure above other so that divs are clickable */
-			z-index: 10;
 			font-weight: lighter;
 		}
-
+		
+		/*
+		#listenerMode {}
+		#readerMode {}
+		*/
+		
 		#points {
 			right: 0;
 			bottom: 0;
@@ -131,7 +134,10 @@
 		</filter>
 	</svg>
 
-	<div id="listenerMode"></div>
+	<div id="upperHud">
+		<div id="listenerMode"></div>
+		<div id="readerMode"></div>
+	</div>
 	<div id="listenerStatus"></div>
 	<div id="hud">
 		<div id="mode"></div>

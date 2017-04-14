@@ -135,6 +135,7 @@ window.onload = function () {
 	// get relevant HTML elements
 	const html_listener_status = document.getElementById('listenerStatus');
 	const html_listener_mode = document.getElementById('listenerMode');
+	const html_reader_mode = document.getElementById('readerMode');
 
 	const html_mode = document.getElementById('mode');
 	const html_score = document.getElementById('score');
@@ -152,6 +153,23 @@ window.onload = function () {
 	const KEY_0 = 48;
 	const KEY_9 = 57;
 
+	// hint constants in milliseconds
+	const HINT_START = 4000;
+	const HINT_FULL = 9000;
+	// maximum opacity of the hint
+	const HINT_MAX_OPACITY = 0.5;
+
+	// scoring constants
+	const MIN_SCORE = 10;
+	const MAX_SCORE = 90;
+	// time until score drains to minimum score, in milliseconds
+	const SCORE_TIME = 7000;
+
+	// how long to highlight a wrong attempt
+	const WRONG_ATTEMPT_HIGHLIGHT_TIMEOUT = 1000;
+	const RIGHT_ANSWER_HIGHLIGHT_TIMEOUT = 1000;
+	const SCORE_ADD_NOTIFICATION_TIMEOUT = 1500;
+
 	let showHintAfterSomeTime = Params.showHint;
 	let multiplicationQuestion = Questions.parse(Params.questionMode);
 	let score = 0;
@@ -159,13 +177,14 @@ window.onload = function () {
 	let attempt = '';
 	let answer = '';
 	let question = '';
+	let questionStartTime = 0;
 
 	let highlightWrongAnswerTimeout = 0;
+	let highlightRightAnswerTimeout = 0;
 	let addScoreNotificationTimeout = 0;
-	let questionStartTime = Date.now();
 
 	function startListening() {
-		html_listener_status.innerHTML = "Listening!";
+		html_listener_status.innerHTML = "<b>Speak up!</b>";
 
 		Speech.initRecognition(
 			Params.listenLocale,
@@ -180,15 +199,15 @@ window.onload = function () {
 				// removes all non-number elements
 				const numbersOnly = lastWord.replace(/\D/g, '');
 				if (numbersOnly.length > 0) {
-					addNumber(parseInt(numbersOnly));
-					draw();
+					updateAttempt(parseInt(numbersOnly));
+					update();
 				}
 			}
 		)
 	}
 
 	function stopListening() {
-		html_listener_status.innerHTML = "Not listening.";
+		html_listener_status.innerHTML = "(Not listening.)";
 		Speech.abortRecognition();
 	};
 
@@ -252,45 +271,41 @@ window.onload = function () {
 		nextQuestion();
 	};
 
-	function addNumber(n: number) {
-		const tmp = attempt + n.toString();
-		if (answer.indexOf(tmp) !== 0) {
-			highlightWrongAnswerTimeout = 500;
-		}
-		attempt = tmp;
-	};
-
 	window.onkeyup = function (e: KeyboardEvent) {
 
-		if (e.keyCode === KEY_ENTER) { // <ENTER> for next question
+		// <ENTER> for next question
+		if (e.keyCode === KEY_ENTER) {
 			// give up on this question
 			ProgressTracker.deselect();
 			nextQuestion();
 			return;
 		}
 
-		if (e.keyCode === KEY_H) { // 'h' for help toggle
+		// 'h' for help toggle
+		if (e.keyCode === KEY_H) {
 			showHintAfterSomeTime = !showHintAfterSomeTime;
 			return;
 		}
 
-		if (e.keyCode === KEY_Q) {  // 'q' for switching format
+		// 'q' for switching format
+		if (e.keyCode === KEY_Q) {
 			// give up on this question
 			ProgressTracker.deselect();
 			switchQuestionFormat();
 			return;
 		}
 
-		if (e.keyCode >= KEY_0 && e.keyCode <= KEY_9) { // numbers
-			addNumber(e.keyCode - KEY_0);
-			draw();
+		// numbers keys
+		if (e.keyCode >= KEY_0 && e.keyCode <= KEY_9) {
+			updateAttempt(e.keyCode - KEY_0);
+			update();
 			return;
 		}
 	};
 
 
 	window.onresize = function () {
-		// fractions of the height
+		// fractions of the height, split into equal sized cells
 		const FRACTIONS = Math.round(window.innerHeight / 13);
 
 		html_question.style.paddingTop = (1 * FRACTIONS) + 'px';
@@ -332,18 +347,61 @@ window.onload = function () {
 		animate();
 	};
 
-	function draw() {
-		const delta = Date.now() - questionStartTime;
+	function updateAttempt(n: number) {
+		// ignore attempt to update while highlighting correct answer
+		if (highlightRightAnswerTimeout !== 0) {
+			return;
+		}
 
+		// if there was a previous wrong answer that we are highlighting, clear it
 		if (highlightWrongAnswerTimeout > 0) {
-			html_attempt.style.color = "red";
-		} else {
+			attempt = '';
+			highlightWrongAnswerTimeout = 0;
 			html_attempt.style.color = "black";
 		}
 
+		const completeAttempt = attempt + n.toString();
+
+		// if wrong answer, even if partial.
+		// (even partial matches will match 'answer' at index 0)
+		if (answer.indexOf(completeAttempt) !== 0) {
+			highlightWrongAnswerTimeout = Date.now() + WRONG_ATTEMPT_HIGHLIGHT_TIMEOUT;
+			html_attempt.style.color = "red";
+		}
+
+		attempt = completeAttempt;
+	};
+
+	function update() {
+		if (highlightRightAnswerTimeout !== 0) {
+			// past the highlight timeout interval
+			if (Date.now() > highlightRightAnswerTimeout) {
+				highlightRightAnswerTimeout = 0;
+				attempt = '';
+				html_attempt.style.color = "black";
+
+				nextQuestion();
+			} else {
+				// before the highlight correct answer timeout interval
+				// return immediately so nothing updates
+				return;
+			}
+		}
+
+		// time since question started, in milliseconds
+		const timeOnQuestion = Date.now() - questionStartTime;
+
+		// 1. Question update
 		html_question.innerHTML = question;
 
-		// padds the attempt to have the same length as the correct answer
+		// 2. Attempt update
+		if (highlightWrongAnswerTimeout !== 0 && Date.now() > highlightWrongAnswerTimeout) {
+			attempt = '';
+			highlightWrongAnswerTimeout = 0;
+			html_attempt.style.color = "black";
+		}
+
+		// pads the attempt to have the same length as the correct answer
 		// so that a partial match will properly overlap any hint.
 		// CAUTION: this requires a monospace font that has exact same space
 		// for all number characters AND the white space character that is
@@ -355,59 +413,83 @@ window.onload = function () {
 		}
 		html_attempt.innerHTML = padded_attempt;
 
+		// 3. Hint update
 		if (showHintAfterSomeTime) {
+			// Opacity will kind of start at HINT_START although low values may not be all that
+			// visible. By HINT_FULL it should be fully visible (i.e. after HINT_FULL-HINT_START
+			// is the duration of the fade effect.
+			const hint_opacity = Math.min(((timeOnQuestion - HINT_START) / HINT_FULL), HINT_MAX_OPACITY);
+
 			// help if too much time without correct answer
-			html_answer.style.textShadow = "0px 0px 15px rgba(99, 99, 99, " + Math.min(((delta - 4000) / 9000), 0.5) + ")";
+			html_answer.style.textShadow = "0px 0px 15px rgba(99, 99, 99, " + hint_opacity + ")";
 			html_answer.innerHTML = answer;
 		} else {
 			html_answer.style.textShadow = "none";
 		}
 
-		// bottom right corner timer and max score points
-		const maxScore = 10 + (delta < 6000 ? Math.round(50 * (1 - ((delta + 1) / 6000))) : 0);
+		// 4. Status bar (score/max score and timer) update
+		const maxScore = MIN_SCORE + (timeOnQuestion < SCORE_TIME ? Math.round(MAX_SCORE * (1 - ((timeOnQuestion + 1) / SCORE_TIME))) : 0);
+		html_points.innerHTML = 'max. points: ' + maxScore + ' (' + (Math.floor(timeOnQuestion / 1000)) + 's)';
 		html_mode.innerHTML = multiplicationQuestion === Questions.Random.ask ? 'Random' : 'Sequential';
 		html_score.innerHTML = (showHintAfterSomeTime ? ' [help on] ' : '') + 'score: ' + score;
-		html_points.innerHTML = 'max. points: ' + maxScore + ' (' + (Math.round(delta / 1000)) + 's)';
+
+		// 5. Timeout counters update
 
 		// got right answer
 		if (attempt === answer) {
+			// immediately stop listening
+			if (Params.listenAnswers) {
+				stopListening();
+			}
 			score += maxScore;
 
-			// score increase notification timeout to 1.5s after correct answer
-			addScoreNotificationTimeout = Date.now() + 1500;
+			// score increase notification timeout to SCORE_ADD_NOTIFICATION_TIMEOUT after correct answer
+			// intentionally only shows last obtained score
+			addScoreNotificationTimeout = Date.now() + SCORE_ADD_NOTIFICATION_TIMEOUT;
 			html_add.innerHTML = '+' + maxScore + '!';
 
-			ProgressTracker.deselect(maxScore);
-			nextQuestion();
+			const color = maxScore > 50 ? ProgressTracker.GREEN : (maxScore <= 10 ? ProgressTracker.RED : ProgressTracker.YELLOW);
+			const message = maxScore > 50 ? "Excellent!!" : (maxScore <= 10 ? "Correct." : "Good!");
+
+			ProgressTracker.deselect(color);
+
+			highlightRightAnswerTimeout = Date.now() + RIGHT_ANSWER_HIGHLIGHT_TIMEOUT;
+			html_attempt.style.color = "green";
+			html_attempt.innerHTML = answer + "<font size=10pt><br/><i>" + message + "</i></font>";
 		}
-		if (highlightWrongAnswerTimeout > 0) {
-			highlightWrongAnswerTimeout -= delta;
-			if (highlightWrongAnswerTimeout <= 0) {
-				attempt = '';
-			}
-		}
+		
 		// remove add score notification if we are already past the set timeout
 		if (Date.now() > addScoreNotificationTimeout) {
 			html_add.innerHTML = '';
 		}
 	};
 
+	//
+	// Startup Logic
+	//
+
 	if (Params.listenAnswers) {
-		html_listener_mode.innerHTML = "Listening in " + Params.listenLocale + ".";
-		html_listener_mode.title = "Click to force speech recognition restart.";
+		html_listener_mode.innerHTML = "Listening answers in " + Params.listenLocale + ".";
 
 		// force listener restart in case listening failed to start
-		html_listener_mode.onclick = () => {
+		html_listener_status.title = "Click to force speech recognition restart.";
+		html_listener_status.onclick = () => {
 			console.log('Forced speech restart!');
 			stopListening();
 			startListening();
 		};
 	} else {
-		html_listener_mode.innerHTML = "Listening disabled.";
+		html_listener_mode.innerHTML = "Listening answers disabled.";
+	}
+
+	if (Params.readQuestions) {
+		html_reader_mode.innerHTML = "Reading questions in " + Params.readLocale + ".";
+	} else {
+		html_reader_mode.innerHTML = "Reading questions disabled.";
 	}
 
 	// get the initial question
 	nextQuestion();
 	// 10 fps ought to be enough
-	loop(10, draw);
+	loop(10, update);
 };

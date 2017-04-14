@@ -1,6 +1,6 @@
 /// <reference path="../lib/d3.d.ts" />
 
-// FIXME use this instead:
+// TODO: use the import instead:
 // import * as d3 from "d3";
 
 module ProgressTracker {
@@ -29,7 +29,7 @@ module ProgressTracker {
 	};
 
 	function deltaX(i: number) {
-		// FIXME misaligned!
+		// FIXME: misaligned!
 		return (GRID_WIDTH / 2 - ((MAX / 2) * (side + delta))) + (i * (delta + side));
 	};
 	function deltaY(j: number) {
@@ -106,11 +106,11 @@ module ProgressTracker {
 	};
 
 	/**
-	 * Deselects current tracking.
+	 * Deselects current cell.
 	 * 
-	 * @param points - the score that caused the tracking state-change, default to 0 (no points).
+	 * @param color, the color to leave the cell after deselection.
 	 */
-	export function deselect(points: number = 0) {
+	export function deselect(color: string = RED) {
 		if (selectedCell !== null) {
 			grid[toGridIndex(selectedCell.x, selectedCell.y)]
 				.transition()
@@ -120,12 +120,16 @@ module ProgressTracker {
 				.attr("y", deltaY(selectedCell.y))
 				.attr("width", side)
 				.attr("height", side)
-				.style("fill", (points > 30 ? "#00ff00" : (points <= 10 ? '#ff0000' : '#ffff00')))
+				.style("fill", color)
 				.attr('opacity', 0.1);
 
 			selectedCell = null;
 		}
 	};
+
+	export const GREEN = "#00ff00";
+	export const RED = "#ff0000";
+	export const YELLOW = "#ffff00";
 
 	/**
 	 * Removes the SVG element from the document.

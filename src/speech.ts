@@ -28,7 +28,7 @@ module Speech {
     }
 
     // JSpeech grammar for numbers-only.
-    // TODO: not sure if this is working correctly since itermediate results may not be numbers.
+    // TODO: not sure if this is working correctly since intermediate results may not be numbers.
     const grammar = '#JSGF V1.0; grammar numbers; public <numbers> = <com.sun.speech.app.numbers.digits>';
     const speechRecognitionList = new webkitSpeechGrammarList();
     speechRecognitionList.addFromString(grammar, 1);
