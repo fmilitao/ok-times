@@ -9,7 +9,9 @@ Question mode (random or sequential) can be toggle with `q` or by clicking on th
 Questions can be skipped with `enter`.
 
 
-[LINK](http://fmilitao.github.io/ok-times/)
+[Keyboard only mode](http://fmilitao.github.io/ok-times/?read-questions=false&listen-answers=false)
+
+[Voice mode](http://fmilitao.github.io/ok-times/?read-locale=pt-PT&listen-locale=pt-PT&times-text=vezes)
 
 For some reason, rendering SVGs with blur in Firefox is horribly slow.
 
