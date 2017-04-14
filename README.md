@@ -1,20 +1,49 @@
 # OK Times Table Practice #
 
-An OK way to practice the times table.
+An okay way to practice the times table, with questions ranging from 2 to 12.
 
-Random mode uses weights extracted from the graph of: http://www.bbc.com/news/blogs-magazine-monitor-28143553 (a very rough approximation of those values). Time table questions range from 2 to 12.
+## Information
 
-Help/assist (showing the blurred answer after a few seconds) can be disabled with `h` or by clicking the score.
+There are two game modes:
 
-Question mode (random or sequential) can be toggle with `q` or by clicking on the _Random_/_Sequential_ text.
+* `random` - random mode was inspired by the BBC article http://www.bbc.com/news/blogs-magazine-monitor-28143553 that shows the "hardest" multiplication questions. This mode uses randomly selected multiplication questions but using the approximate weights from that article so that harder questions are more likely to be picked than easier ones.
 
-Questions can be skipped with `enter`.
+* `sequential` - goes over all possible values of the 2 to 12 times table, sequentially and in order from the lower (2x2) to the higher (12x12) values.
 
 
-[Simple mode (voice/speech disabled)](http://fmilitao.github.io/ok-times/?read-questions=false&listen-answers=false)
+Input can be through either keyboard or voice (if you are using Google Chrome with `webkitSpeechRecognition` support). For speech recognition to work correctly, you must give permission to the site to use your microphone. You should only be prompted for this permission when speech recognition starts for the first time.
 
-[Voice mode - US English](http://fmilitao.github.io/ok-times/?locale=en-US)
-[Voice mode - Portuguese](http://fmilitao.github.io/ok-times/?locale=pt-PT&times-text=vezes)
+
+Additional key bindings exist for convenience:
+
+* `h` - to toggle help/assist (i.e. showing the blurred answer after a few seconds), which can also be done by clicking the score text.
+
+* `q` - to toggle question mode (`random` or `sequential`), which can also be done by clicking on the _Random_/_Sequential_ text.
+
+* `enter` - to skip a question.
+
+
+Finally, there are also a few URL parameters:
+
+* `read-questions` - whether to read the questions through speech synthesis. Default: `true`.
+* `listen-answers` - whether to listen to the answers through speech recognition. Default: `true`.
+* `read-locale` - the locale for speech synthesis. Default: `en-US`.
+* `listen-locale` - the locale for speech recognition. Default: `en-US`.
+* `locale` - sets both locales for speech synthesis and recognition, at the same time.
+* `mode` - game mode can be either `sequential` or `random`. Default: `random`.
+* `show-hint` - whether to show an answer hint after a few seconds. Default: `true`.
+* `times-text` - how the times symbol should be read. Default: `times`.
+
+
+## Links
+
+A few links with convenient game modes:
+
+* [Simple mode](http://fmilitao.github.io/ok-times/?read-questions=false&listen-answers=false) - speech synthesis and recognition OFF, so you will have to use the keyboard.
+
+* [Voice mode - US English](http://fmilitao.github.io/ok-times/?locale=en-US) - speech synthesis and recognition ON with US English.
+
+* [Voice mode - Portuguese](http://fmilitao.github.io/ok-times/?locale=pt-PT&times-text=vezes) - speech synthesis and recognition ON with Portuguese.
 
 ## Know Issues
 
