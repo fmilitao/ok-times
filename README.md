@@ -47,7 +47,8 @@ A few links with convenient game modes:
 
 ## Know Issues
 
-* Sometimes speech recognition does not start correctly. If that happens just click the "(Not listening.)" text and speech recognition should be restated... which hopefully fixes the problem.
+* *Sometimes speech recognition does not start correctly!* If that happens just click the "(Not listening.)" text and speech recognition should be restated... which hopefully fixes the problem.
+* If speech recognition happens to merge several numbers together by mistake, you should try to say some non-number word (like 'and') to help speech recognition separate the numbers. Only the number said last is considered by the game.
 * For some reason, rendering SVGs with blur in Firefox is horribly slow.
 * Speech recognition only works in Chrome.
-* Speech recognition is off while speech synthesis is speaking, so you will have to wait until speech synthesis ends before you can answer. (But the score timers will not wait for this.)
+* Speech recognition is off while speech synthesis is speaking, so you will have to wait until speech synthesis ends before you can answer. (But the score timers will not wait for this.) This pause is done to avoid the speech synthesis output to be used in speech recognition.
