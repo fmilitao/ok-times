@@ -159,7 +159,7 @@ window.onload = function () {
     }
     ;
     function stopListening() {
-        html_listener_status.innerHTML = "(Not listening.)";
+        html_listener_status.innerHTML = "(Not listening. Press 'spacebar' to force listening.)";
         Speech.abortRecognition();
     }
     ;
