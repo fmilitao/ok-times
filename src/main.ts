@@ -12,7 +12,7 @@ module Params {
 	export let readLocale = "en-US";
 	export let listenLocale = "en-US";
 	export let readQuestions = true;
-	export let listenAnswers = true;
+	export let listenAnswers = true && SpeechCheck.isSpeechRecognitionAvailable();
 	export let showHint = true;
 	export let questionMode = 'random';
 
@@ -148,6 +148,7 @@ window.onload = function () {
 
 	// relevant key codes
 	const KEY_ENTER = 13;
+	const KEY_SPACEBAR = 32;
 	const KEY_H = 72;
 	const KEY_Q = 81;
 	const KEY_0 = 48;
@@ -204,7 +205,7 @@ window.onload = function () {
 				}
 			}
 		)
-	}
+	};
 
 	function stopListening() {
 		html_listener_status.innerHTML = "(Not listening.)";
@@ -213,8 +214,8 @@ window.onload = function () {
 
 	function nextQuestion() {
 		const [x, y] = multiplicationQuestion();
-		const q = x + ' &times; ' + y;
-		if (q === question) {
+		const newQuestion = x + ' &times; ' + y;
+		if (newQuestion === question) {
 			// same question! try again
 			nextQuestion();
 			return;
@@ -228,18 +229,26 @@ window.onload = function () {
 		if (Params.listenAnswers && Params.readQuestions) {
 			stopListening();
 
-			Speech.say(
+			Talk.say(
 				`${x} ${Params.timesText} ${y}`,
 				Params.readLocale,
 				(event: any) => {
-					// only start recognition after speech ended
-					startListening();
+					// While the question is being red, we may press the
+					// skip question button, causing the speech to end
+					// but then we do not want to listen to the answer.
+					// Thus, we check that no timeout was placed.
+					if (highlightRightAnswerTimeout === 0) {
+						// only start recognition after speech ended
+						startListening();
+					} else {
+						console.log('denied!!');
+					}
 				}
 			);
 		} else {
 			// read-only
 			if (Params.readQuestions) {
-				Speech.say(
+				Talk.say(
 					`${x} ${Params.timesText} ${y}`,
 					Params.readLocale
 				);
@@ -265,19 +274,35 @@ window.onload = function () {
 		ProgressTracker.select(x - 2, y - 2);
 	};
 
+	function giveUp() {
+		if (Params.listenAnswers) {
+			stopListening();
+		}
+
+		ProgressTracker.deselect();
+		highlightRightAnswerTimeout = Date.now() + RIGHT_ANSWER_HIGHLIGHT_TIMEOUT;
+		html_attempt.style.color = "orange";
+		html_attempt.innerHTML = answer + "<font size=8pt><br/><i>(now you know)</i></font>";
+	};
+
+
 	function switchQuestionFormat() {
 		multiplicationQuestion = multiplicationQuestion === Questions.Random.ask ? Questions.Sequential.ask : Questions.Random.ask;
-		// get a new question
-		nextQuestion();
+		// forget current question, move to new mode
+		giveUp();
+	};
+
+	function forceSpeechRecognitionRestart() {
+		console.log('Forced speech restart!');
+		stopListening();
+		startListening();
 	};
 
 	window.onkeyup = function (e: KeyboardEvent) {
 
-		// <ENTER> for next question
-		if (e.keyCode === KEY_ENTER) {
-			// give up on this question
-			ProgressTracker.deselect();
-			nextQuestion();
+		// <ENTER> for next question / give up on this question
+		if (e.keyCode === KEY_ENTER && highlightRightAnswerTimeout === 0) {
+			giveUp();
 			return;
 		}
 
@@ -289,10 +314,13 @@ window.onload = function () {
 
 		// 'q' for switching format
 		if (e.keyCode === KEY_Q) {
-			// give up on this question
-			ProgressTracker.deselect();
 			switchQuestionFormat();
 			return;
+		}
+
+		// force voice recognition restart
+		if (e.keyCode === KEY_SPACEBAR && Params.listenAnswers) {
+			forceSpeechRecognitionRestart();
 		}
 
 		// numbers keys
@@ -455,9 +483,14 @@ window.onload = function () {
 
 			highlightRightAnswerTimeout = Date.now() + RIGHT_ANSWER_HIGHLIGHT_TIMEOUT;
 			html_attempt.style.color = "green";
-			html_attempt.innerHTML = answer + "<font size=10pt><br/><i>" + message + "</i></font>";
+
+			// TODO: Figure out a font size so that these two do not fall off screen when the screen is too small.
+			// hackish way to give some more feedback to the user about the time-to-answer performance
+			const htmlMessage = "<font size=10pt><br/><i>" + message + "</i></font>";
+			const htmlPoints = "<font size=6pt><br/><i>(+" + maxScore + " points)</i></font>";
+			html_attempt.innerHTML = answer + htmlMessage + htmlPoints;
 		}
-		
+
 		// remove add score notification if we are already past the set timeout
 		if (Date.now() > addScoreNotificationTimeout) {
 			html_add.innerHTML = '';
@@ -471,15 +504,15 @@ window.onload = function () {
 	if (Params.listenAnswers) {
 		html_listener_mode.innerHTML = "Listening answers in " + Params.listenLocale + ".";
 
-		// force listener restart in case listening failed to start
+		// force listener restart in case listening failed to start for some reason
 		html_listener_status.title = "Click to force speech recognition restart.";
-		html_listener_status.onclick = () => {
-			console.log('Forced speech restart!');
-			stopListening();
-			startListening();
-		};
+		html_listener_status.onclick = forceSpeechRecognitionRestart;
 	} else {
-		html_listener_mode.innerHTML = "Listening answers disabled.";
+		if (SpeechCheck.isSpeechRecognitionAvailable()) {
+			html_listener_mode.innerHTML = "Listening answers disabled (but available).";
+		} else {
+			html_listener_mode.innerHTML = "Listening answers unavailable.";
+		}
 	}
 
 	if (Params.readQuestions) {

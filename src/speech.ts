@@ -5,8 +5,17 @@
 declare const webkitSpeechRecognition: any;
 declare const webkitSpeechGrammarList: any;
 
-module Speech {
+module SpeechCheck {
+    /**
+     * Whether the speech recognition types are available.
+     */
+    export function isSpeechRecognitionAvailable() {
+        return (typeof webkitSpeechRecognition) !== 'undefined' &&
+            (typeof webkitSpeechGrammarList) !== 'undefined';
+    }
+}
 
+module Talk {
     /**
      * Say some message through text-to-speech service.
      * 
@@ -27,6 +36,15 @@ module Speech {
         window.speechSynthesis.speak(msg);
     }
 
+    /**
+     * Stops speaking immediately.
+     */
+    export function quiet() {
+        window.speechSynthesis.cancel();
+    }
+}
+
+module Speech {
     // JSpeech grammar for numbers-only.
     // TODO: not sure if this is working correctly since intermediate results may not be numbers.
     const grammar = '#JSGF V1.0; grammar numbers; public <numbers> = <com.sun.speech.app.numbers.digits>';

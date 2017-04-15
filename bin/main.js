@@ -4,7 +4,7 @@ var Params;
     Params.readLocale = "en-US";
     Params.listenLocale = "en-US";
     Params.readQuestions = true;
-    Params.listenAnswers = true;
+    Params.listenAnswers = true && SpeechCheck.isSpeechRecognitionAvailable();
     Params.showHint = true;
     Params.questionMode = 'random';
     var splitParameters = document.URL.split('?');
@@ -120,6 +120,7 @@ window.onload = function () {
     var html_answer = document.getElementById('answer');
     var html_add = document.getElementById('add');
     var KEY_ENTER = 13;
+    var KEY_SPACEBAR = 32;
     var KEY_H = 72;
     var KEY_Q = 81;
     var KEY_0 = 48;
@@ -156,6 +157,7 @@ window.onload = function () {
             }
         });
     }
+    ;
     function stopListening() {
         html_listener_status.innerHTML = "(Not listening.)";
         Speech.abortRecognition();
@@ -163,20 +165,25 @@ window.onload = function () {
     ;
     function nextQuestion() {
         var _a = multiplicationQuestion(), x = _a[0], y = _a[1];
-        var q = x + ' &times; ' + y;
-        if (q === question) {
+        var newQuestion = x + ' &times; ' + y;
+        if (newQuestion === question) {
             nextQuestion();
             return;
         }
         if (Params.listenAnswers && Params.readQuestions) {
             stopListening();
-            Speech.say(x + " " + Params.timesText + " " + y, Params.readLocale, function (event) {
-                startListening();
+            Talk.say(x + " " + Params.timesText + " " + y, Params.readLocale, function (event) {
+                if (highlightRightAnswerTimeout === 0) {
+                    startListening();
+                }
+                else {
+                    console.log('denied!!');
+                }
             });
         }
         else {
             if (Params.readQuestions) {
-                Speech.say(x + " " + Params.timesText + " " + y, Params.readLocale);
+                Talk.say(x + " " + Params.timesText + " " + y, Params.readLocale);
             }
             if (Params.listenAnswers) {
                 stopListening();
@@ -190,15 +197,30 @@ window.onload = function () {
         ProgressTracker.select(x - 2, y - 2);
     }
     ;
+    function giveUp() {
+        if (Params.listenAnswers) {
+            stopListening();
+        }
+        ProgressTracker.deselect();
+        highlightRightAnswerTimeout = Date.now() + RIGHT_ANSWER_HIGHLIGHT_TIMEOUT;
+        html_attempt.style.color = "orange";
+        html_attempt.innerHTML = answer + "<font size=8pt><br/><i>(now you know)</i></font>";
+    }
+    ;
     function switchQuestionFormat() {
         multiplicationQuestion = multiplicationQuestion === Questions.Random.ask ? Questions.Sequential.ask : Questions.Random.ask;
-        nextQuestion();
+        giveUp();
+    }
+    ;
+    function forceSpeechRecognitionRestart() {
+        console.log('Forced speech restart!');
+        stopListening();
+        startListening();
     }
     ;
     window.onkeyup = function (e) {
-        if (e.keyCode === KEY_ENTER) {
-            ProgressTracker.deselect();
-            nextQuestion();
+        if (e.keyCode === KEY_ENTER && highlightRightAnswerTimeout === 0) {
+            giveUp();
             return;
         }
         if (e.keyCode === KEY_H) {
@@ -206,9 +228,11 @@ window.onload = function () {
             return;
         }
         if (e.keyCode === KEY_Q) {
-            ProgressTracker.deselect();
             switchQuestionFormat();
             return;
+        }
+        if (e.keyCode === KEY_SPACEBAR && Params.listenAnswers) {
+            forceSpeechRecognitionRestart();
         }
         if (e.keyCode >= KEY_0 && e.keyCode <= KEY_9) {
             updateAttempt(e.keyCode - KEY_0);
@@ -310,7 +334,9 @@ window.onload = function () {
             ProgressTracker.deselect(color);
             highlightRightAnswerTimeout = Date.now() + RIGHT_ANSWER_HIGHLIGHT_TIMEOUT;
             html_attempt.style.color = "green";
-            html_attempt.innerHTML = answer + "<font size=10pt><br/><i>" + message + "</i></font>";
+            var htmlMessage = "<font size=10pt><br/><i>" + message + "</i></font>";
+            var htmlPoints = "<font size=6pt><br/><i>(+" + maxScore + " points)</i></font>";
+            html_attempt.innerHTML = answer + htmlMessage + htmlPoints;
         }
         if (Date.now() > addScoreNotificationTimeout) {
             html_add.innerHTML = '';
@@ -320,14 +346,15 @@ window.onload = function () {
     if (Params.listenAnswers) {
         html_listener_mode.innerHTML = "Listening answers in " + Params.listenLocale + ".";
         html_listener_status.title = "Click to force speech recognition restart.";
-        html_listener_status.onclick = function () {
-            console.log('Forced speech restart!');
-            stopListening();
-            startListening();
-        };
+        html_listener_status.onclick = forceSpeechRecognitionRestart;
     }
     else {
-        html_listener_mode.innerHTML = "Listening answers disabled.";
+        if (SpeechCheck.isSpeechRecognitionAvailable()) {
+            html_listener_mode.innerHTML = "Listening answers disabled (but available).";
+        }
+        else {
+            html_listener_mode.innerHTML = "Listening answers unavailable.";
+        }
     }
     if (Params.readQuestions) {
         html_reader_mode.innerHTML = "Reading questions in " + Params.readLocale + ".";

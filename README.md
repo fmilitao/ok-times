@@ -16,11 +16,13 @@ Input can be through either keyboard or voice (if you are using Google Chrome wi
 
 Additional key bindings exist for convenience:
 
-* `h` - to toggle help/assist (i.e. showing the blurred answer after a few seconds), which can also be done by clicking the score text.
+* `h` - to toggle *h*elp/assist (i.e. showing the blurred answer after a few seconds), which can also be done by clicking the score text.
 
-* `q` - to toggle question mode (`random` or `sequential`), which can also be done by clicking on the _Random_/_Sequential_ text.
+* `q` - to toggle *q*uestion mode (`random` or `sequential`), which can also be done by clicking on the _Random_/_Sequential_ text.
 
 * `enter` - to skip a question.
+
+* `spacebar` - manually force speech recognition restart.
 
 
 Finally, there are also a few URL parameters:
@@ -51,4 +53,4 @@ A few links with convenient game modes:
 * If speech recognition happens to merge several numbers together by mistake, you should try to say some non-number word (like 'and') to help speech recognition separate the numbers. Only the number said last is considered by the game.
 * For some reason, rendering SVGs with blur in Firefox is horribly slow.
 * Speech recognition only works in Chrome.
-* Speech recognition is off while speech synthesis is speaking, so you will have to wait until speech synthesis ends before you can answer. (But the score timers will not wait for this.) This pause is done to avoid the speech synthesis output to be used in speech recognition.
+* Speech recognition is off while speech synthesis is speaking, so you will have to wait until speech synthesis ends before you can answer. (But the score timers will not wait for this.) This pause is done to avoid the speech synthesis output to be used in speech recognition. If this becomes a problem, you can just turn off speech synthesis.

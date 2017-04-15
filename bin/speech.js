@@ -1,5 +1,13 @@
-var Speech;
-(function (Speech) {
+var SpeechCheck;
+(function (SpeechCheck) {
+    function isSpeechRecognitionAvailable() {
+        return (typeof webkitSpeechRecognition) !== 'undefined' &&
+            (typeof webkitSpeechGrammarList) !== 'undefined';
+    }
+    SpeechCheck.isSpeechRecognitionAvailable = isSpeechRecognitionAvailable;
+})(SpeechCheck || (SpeechCheck = {}));
+var Talk;
+(function (Talk) {
     function say(message, locale, callback) {
         if (callback === void 0) { callback = undefined; }
         var msg = new SpeechSynthesisUtterance();
@@ -8,7 +16,14 @@ var Speech;
         msg.lang = locale;
         window.speechSynthesis.speak(msg);
     }
-    Speech.say = say;
+    Talk.say = say;
+    function quiet() {
+        window.speechSynthesis.cancel();
+    }
+    Talk.quiet = quiet;
+})(Talk || (Talk = {}));
+var Speech;
+(function (Speech) {
     var grammar = '#JSGF V1.0; grammar numbers; public <numbers> = <com.sun.speech.app.numbers.digits>';
     var speechRecognitionList = new webkitSpeechGrammarList();
     speechRecognitionList.addFromString(grammar, 1);
