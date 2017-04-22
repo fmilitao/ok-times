@@ -17,6 +17,16 @@ var Talk;
         window.speechSynthesis.speak(msg);
     }
     Talk.say = say;
+    var Arrays = Array;
+    function asyncCheckVoice(check) {
+        window.speechSynthesis.onvoiceschanged = function () {
+            var voicesLangs = window.speechSynthesis
+                .getVoices().map(function (x) { return x.lang; });
+            check(Arrays.from(new Set(voicesLangs).values()));
+        };
+    }
+    Talk.asyncCheckVoice = asyncCheckVoice;
+    ;
     function quiet() {
         window.speechSynthesis.cancel();
     }

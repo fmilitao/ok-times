@@ -384,8 +384,18 @@ window.onload = function () {
         }
     }
     if (Params.readQuestions) {
-        var icon = '<span class="fa-stack fa-fw"><i class="fa fa-square-o fa-stack-2x"></i><i class="fa fa-volume-up fa-stack-1x"></i></span>';
-        html_output_mode.innerHTML = icon + ' Output in <b>' + Params.readLocale + "</b>.";
+        var icon_1 = '<span class="fa-stack fa-fw"><i class="fa fa-square-o fa-stack-2x"></i><i class="fa fa-volume-up fa-stack-1x"></i></span>';
+        html_output_mode.innerHTML = icon_1 + ' Output in <b>' + Params.readLocale + "</b>.";
+        Talk.asyncCheckVoice(function (voices) {
+            var readLocaleVoiceExists = voices.indexOf(Params.readLocale) !== -1;
+            if (!readLocaleVoiceExists) {
+                html_output_mode.innerHTML = icon_1 + ' Voice <s>' + Params.readLocale + "</s> unavailable. (Click to list.)";
+                html_output_mode.onclick = function () {
+                    html_output_mode.innerHTML = icon_1 + ' Known voices: ' + voices + ".";
+                };
+                console.warn("Voice " + Params.readLocale + " not found. Try one of these voices: " + voices + " instead.");
+            }
+        });
     }
     else {
         var icon = '<span class="fa-stack fa-fw"><i class="fa fa-square-o fa-stack-2x"></i><i class="fa fa-volume-off fa-stack-1x"></i></span>';

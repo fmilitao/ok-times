@@ -36,6 +36,22 @@ module Talk {
         window.speechSynthesis.speak(msg);
     }
 
+    // The declaration and auxiliary variable are just to get around typescript
+    // not knowing about ES6 features. Since we want to use them, this will effectively
+    // quiet the compiler for the uses we make of 'Set' and 'Array.from'.
+    declare const Set: any;
+    const Arrays: any = Array;
+
+    export function asyncCheckVoice(check: (voices: string[]) => void) {
+        window.speechSynthesis.onvoiceschanged = function () {
+            // extract only the voices strings
+            const voicesLangs = window.speechSynthesis
+                .getVoices().map(x => x.lang);
+
+            check(Arrays.from(new Set(voicesLangs).values()));
+        };
+    };
+
     /**
      * Stops speaking immediately.
      */

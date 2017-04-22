@@ -212,8 +212,8 @@ window.onload = function () {
 		html_recording_symbol.innerHTML = '<span class="fa-stack fa-fw">' +
 			'<i class="fa fa-ban fa-stack-2x red-color"></i>' +
 			'<i class="fa fa-microphone fa-stack-1x" aria-hidden="true"></i></span>';
-		
-		html_recorded_text.innerHTML = '' ;
+
+		html_recorded_text.innerHTML = '';
 
 		Speech.abortRecognition();
 	};
@@ -291,8 +291,8 @@ window.onload = function () {
 		highlightRightAnswerTimeout = Date.now() + RIGHT_ANSWER_HIGHLIGHT_TIMEOUT;
 		html_attempt.style.color = "#0D98BA";
 		html_attempt.innerHTML = answer
-				+ "<font size=6pt><br/><i class='fa fa-star-o fa-fw' aria-hidden='true'></i> " + 0 
-				+ '  <i class="fa fa-clock-o fa-fw" aria-hidden="true"></i> ' + Math.floor(timeOnQuestion/1000) + "s </font>";
+			+ "<font size=6pt><br/><i class='fa fa-star-o fa-fw' aria-hidden='true'></i> " + 0
+			+ '  <i class="fa fa-clock-o fa-fw" aria-hidden="true"></i> ' + Math.floor(timeOnQuestion / 1000) + "s </font>";
 	};
 
 
@@ -492,8 +492,8 @@ window.onload = function () {
 			// hackish way to give some more feedback to the user about the time-to-answer performance
 			const htmlPoints = "<font size=6pt><br/><i>(+" + maxScore + " points)</i></font>";
 			html_attempt.innerHTML = answer
-				+ "<font size=6pt><br/><i class='fa " + starIcon + " fa-fw' aria-hidden='true'></i> " + maxScore 
-				+ '  <i class="fa fa-clock-o fa-fw" aria-hidden="true"></i> ' + Math.floor(timeOnQuestion/1000) + "s </font>";
+				+ "<font size=6pt><br/><i class='fa " + starIcon + " fa-fw' aria-hidden='true'></i> " + maxScore
+				+ '  <i class="fa fa-clock-o fa-fw" aria-hidden="true"></i> ' + Math.floor(timeOnQuestion / 1000) + "s </font>";
 		}
 	};
 
@@ -558,6 +558,17 @@ window.onload = function () {
 	if (Params.readQuestions) {
 		const icon = '<span class="fa-stack fa-fw"><i class="fa fa-square-o fa-stack-2x"></i><i class="fa fa-volume-up fa-stack-1x"></i></span>';
 		html_output_mode.innerHTML = icon + ' Output in <b>' + Params.readLocale + "</b>.";
+
+		Talk.asyncCheckVoice(voices => {
+			const readLocaleVoiceExists = voices.indexOf(Params.readLocale) !== -1;
+			if (!readLocaleVoiceExists) {
+				html_output_mode.innerHTML = icon + ' Voice <s>' + Params.readLocale + "</s> unavailable. (Click to list.)";
+				html_output_mode.onclick = function () {
+					html_output_mode.innerHTML = icon + ' Known voices: ' + voices + ".";
+				}
+				console.warn(`Voice ${Params.readLocale} not found. Try one of these voices: ${voices} instead.`);
+			}
+		});
 	} else {
 		const icon = '<span class="fa-stack fa-fw"><i class="fa fa-square-o fa-stack-2x"></i><i class="fa fa-volume-off fa-stack-1x"></i></span>';
 		html_output_mode.innerHTML = icon + " Output disabled.";
