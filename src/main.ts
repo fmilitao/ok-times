@@ -541,6 +541,8 @@ window.onload = function () {
 		// force listener restart in case listening failed to start for some reason
 		html_recording_status.title = "Click or press 'spacebar' to force speech recognition restart.";
 		html_recording_status.onclick = forceSpeechRecognitionRestart;
+		// on recording symbol press.
+		html_recording_status.onclick = forceSpeechRecognitionRestart;
 	} else {
 		if (SpeechCheck.isSpeechRecognitionAvailable()) {
 			html_input_mode.innerHTML = '<span class="fa-stack fa-fw">' +

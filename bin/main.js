@@ -370,6 +370,7 @@ window.onload = function () {
             '<i class="fa fa-microphone fa-stack-1x" aria-hidden="true"></i></span> Input in <b>' + Params.listenLocale + '</b>.';
         html_recording_status.title = "Click or press 'spacebar' to force speech recognition restart.";
         html_recording_status.onclick = forceSpeechRecognitionRestart;
+        html_recording_status.onclick = forceSpeechRecognitionRestart;
     }
     else {
         if (SpeechCheck.isSpeechRecognitionAvailable()) {
