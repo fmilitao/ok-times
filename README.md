@@ -37,10 +37,8 @@ Additional key bindings exist for convenience:
 
 Finally, there are also a few URL parameters:
 
-* `voice-output` - whether to read the questions through _speech synthesis_. Default: `false`.
-* `voice-input` - whether to listen to the answers through _speech recognition_. Default: `false`.
-* `output-locale` - the locale for speech synthesis. Default: `en-US`.
-* `input-locale` - the locale for speech recognition. Default: `en-US`.
+* `output-locale` - the locale for _speech synthesis_. If not provided, speech synthesis will be off. (example: `en-US`, `pt-PT`).
+* `input-locale` - the locale for speech recognition. If not provided, speech recognition will be off. (example: `en-US`, `pt-PT`).
 * `locale` - sets both locales for speech synthesis and recognition, at the same time.
 * `mode` - game mode can be either `sequential` or `random`. Default: `random`.
 * `show-hint` - whether to show an answer hint after a few seconds. Default: `true`.

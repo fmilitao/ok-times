@@ -1,10 +1,8 @@
 var Params;
 (function (Params) {
     Params.timesText = "times";
-    Params.readLocale = "en-US";
-    Params.listenLocale = "en-US";
-    Params.readQuestions = false;
-    Params.listenAnswers = false;
+    Params.readLocale = "";
+    Params.listenLocale = "";
     Params.showHint = true;
     Params.questionMode = 'random';
     var splitParameters = document.URL.split('?');
@@ -34,12 +32,6 @@ var Params;
                     case 'times-text':
                         Params.timesText = value;
                         break;
-                    case 'voice-output':
-                        Params.readQuestions = value.toLowerCase() === 'true';
-                        break;
-                    case 'voice-input':
-                        Params.listenAnswers = value.toLowerCase() === 'true' && SpeechCheck.isSpeechRecognitionAvailable();
-                        break;
                     default:
                         console.warn("Ignoring unknown paramter: " + key + "=" + value + ".");
                         break;
@@ -47,6 +39,8 @@ var Params;
             }
         }
     }
+    Params.readQuestions = Params.readLocale !== "";
+    Params.listenAnswers = Params.listenLocale !== "" && SpeechCheck.isSpeechRecognitionAvailable();
 })(Params || (Params = {}));
 ;
 var Questions;

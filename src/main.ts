@@ -9,10 +9,8 @@
 module Params {
 	// default values:
 	export let timesText = "times";
-	export let readLocale = "en-US";
-	export let listenLocale = "en-US";
-	export let readQuestions = false;
-	export let listenAnswers = false;
+	export let readLocale = "";
+	export let listenLocale = "";
 	export let showHint = true;
 	export let questionMode = 'random';
 
@@ -44,12 +42,6 @@ module Params {
 					case 'times-text':
 						timesText = value;
 						break;
-					case 'voice-output':
-						readQuestions = value.toLowerCase() === 'true';
-						break;
-					case 'voice-input':
-						listenAnswers = value.toLowerCase() === 'true'  && SpeechCheck.isSpeechRecognitionAvailable();
-						break;
 					default:
 						console.warn(`Ignoring unknown paramter: ${key}=${value}.`);
 						break;
@@ -57,6 +49,9 @@ module Params {
 			}
 		}
 	}
+
+	export let readQuestions = readLocale !== "";
+	export let listenAnswers = listenLocale !== "" && SpeechCheck.isSpeechRecognitionAvailable();
 };
 
 module Questions {
