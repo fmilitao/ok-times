@@ -2,6 +2,7 @@
 
 <head>
 	<title>OK Times</title>
+	<link rel="stylesheet" href="lib/font-awesome-4.7.0/css/font-awesome.min.css">
 
 	<style>
 		body {
@@ -33,41 +34,15 @@
 		.wp2 {
 			text-align: center;
 		}
+		/* recording status */
 		
-		#hud {
-			position: absolute;
-			bottom: 0;
-			font-size: 12pt;
-			padding: 5px 5px;
-			color: black;
-			font-family: "Helvetica";
-			/* ensure above other so that divs are clickable */
-			z-index: 11;
-		}
-		
-		#hud div {
-			display: inline-block;
-		}
-		
-		#mode {
-			font-weight: bolder;
-		}
-		
-		#score {
-			font-weight: lighter;
-		}
-		
-		#add {
-			font-weight: lighter;
-			color: green;
-		}
-		
-		#listenerStatus {
+		#recording-status {
 			/* font-weight: bolder; */
 			left: 50%;
 			transform: translate(-50%, 0);
 			bottom: 0;
 			position: absolute;
+			text-align: center;
 			font-size: 14pt;
 			padding: 5px 5px;
 			color: rgba(0, 0, 0, 0.5);
@@ -76,32 +51,46 @@
 			z-index: 10;
 		}
 		
-		#upperHud {
+		#hud {
 			left: 0;
 			top: 0;
 			position: absolute;
-			font-size: 10pt;
-			padding: 5px 5px;
+			font-size: 20px;
+			padding: 10px 10px;
+			color: black;
+			font-family: "Helvetica";
+			font-weight: lighter;
+		}
+		
+		#hud div {
+			margin-bottom: 8px;
+		}
+		
+		#game-options {
+			position: absolute;
+			bottom: 0;
+			font-size: 15px;
+			padding: 10px 10px;
 			color: rgba(0, 0, 0, 0.4);
 			font-family: "Helvetica";
-			font-weight: lighter;
+			/* ensure above other so that divs are clickable */
+			z-index: 11;
 		}
-		
-		/*
-		#listenerMode {}
-		#readerMode {}
-		*/
-		
-		#points {
-			right: 0;
-			bottom: 0;
-			position: absolute;
-			font-size: 12pt;
-			padding: 5px 5px;
-			color: rgba(0, 0, 0, 0.5);
-			font-family: "Helvetica";
-			font-weight: lighter;
+
+		#game-options div {
+			width: 100%;
+			/*background-color: red;*/
 		}
+
+		#game-mode:hover,
+		#hint-mode:hover {
+			color: black;
+			cursor: pointer;
+			background-color: #dddddd;
+			border-radius: 5px;
+		}
+
+		/* MAIN UI */
 		
 		#question {
 			display: inline-block;
@@ -117,6 +106,19 @@
 			display: inline-block;
 			white-space: pre;
 			text-shadow: 4px 4px 12px #777777;
+		}
+		
+		#recording-symbol {
+			font-size: 20px;
+			margin-top: 10px;
+		}
+		
+		.red-color {
+			color: rgba(155, 18, 39, 0.4);
+		}
+
+		.green-color {
+			color: rgba(17, 120, 155, 0.4);
 		}
 	</style>
 	<script type="text/javascript" src="lib/d3.min.js"></script>
@@ -134,17 +136,28 @@
 		</filter>
 	</svg>
 
-	<div id="upperHud">
-		<div id="listenerMode"></div>
-		<div id="readerMode"></div>
-	</div>
-	<div id="listenerStatus"></div>
+	<!-- Top left HUD -->
 	<div id="hud">
-		<div id="mode"></div>
 		<div id="score"></div>
-		<div id="add"></div>
+		<div id="points"></div>
+		<div id="timer"></div>
 	</div>
-	<div id="points"></div>
+
+	<!-- Bottom left -->
+	<div id="game-options">
+		<div id="hint-mode"></div>
+		<div id="game-mode"></div>
+		<div id="input-mode"></div>
+		<div id="output-mode"></div>
+	</div>
+
+	<!-- Bottom recording -->
+	<div id="recording-status">
+		<div id="recorded-text"></div>
+		<div id="recording-symbol"></div>
+	</div>
+
+	<!-- Main Game UI-->
 
 	<div class="wp1">
 		<div class="wp2">

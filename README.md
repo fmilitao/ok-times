@@ -2,7 +2,17 @@
 
 An okay way to practice the times table, with questions ranging from 2 to 12.
 
-## Information
+## Quick Links
+
+Links for convenient game modes (speech output and input may not be available on all browsers and operating systems):
+
+* [Simple mode](http://fmilitao.github.io/ok-times/) - sound off, only keyboard as input.
+
+* [Voice mode - US English](http://fmilitao.github.io/ok-times/?locale=en-US) - speech synthesis and recognition ON using 'US English'.
+
+* [Voice mode - Portuguese](http://fmilitao.github.io/ok-times/?locale=pt-PT&times-text=vezes) - speech synthesis and recognition ON using 'Portuguese'.
+
+## Details
 
 There are two game modes:
 
@@ -27,25 +37,15 @@ Additional key bindings exist for convenience:
 
 Finally, there are also a few URL parameters:
 
-* `read-questions` - whether to read the questions through speech synthesis. Default: `true`.
-* `listen-answers` - whether to listen to the answers through speech recognition. Default: `true`.
-* `read-locale` - the locale for speech synthesis. Default: `en-US`.
-* `listen-locale` - the locale for speech recognition. Default: `en-US`.
+* `voice-output` - whether to read the questions through _speech synthesis_. Default: `false`.
+* `voice-input` - whether to listen to the answers through _speech recognition_. Default: `false`.
+* `output-locale` - the locale for speech synthesis. Default: `en-US`.
+* `input-locale` - the locale for speech recognition. Default: `en-US`.
 * `locale` - sets both locales for speech synthesis and recognition, at the same time.
 * `mode` - game mode can be either `sequential` or `random`. Default: `random`.
 * `show-hint` - whether to show an answer hint after a few seconds. Default: `true`.
 * `times-text` - how the times symbol should be read. Default: `times`.
 
-
-## Links
-
-A few links with convenient game modes:
-
-* [Simple mode](http://fmilitao.github.io/ok-times/?read-questions=false&listen-answers=false) - speech synthesis and recognition OFF, so you will have to use the keyboard.
-
-* [Voice mode - US English](http://fmilitao.github.io/ok-times/?locale=en-US) - speech synthesis and recognition ON with US English.
-
-* [Voice mode - Portuguese](http://fmilitao.github.io/ok-times/?locale=pt-PT&times-text=vezes) - speech synthesis and recognition ON with Portuguese.
 
 ## Know Issues
 
@@ -54,3 +54,8 @@ A few links with convenient game modes:
 * For some reason, rendering SVGs with blur in Firefox is horribly slow.
 * Speech recognition only works in Chrome.
 * Speech recognition is off while speech synthesis is speaking, so you will have to wait until speech synthesis ends before you can answer. (But the score timers will not wait for this.) This pause is done to avoid the speech synthesis output to be used in speech recognition. If this becomes a problem, you can just turn off speech synthesis.
+
+## Extra Credits
+
+* Uses the awesome [Font Awesome](http://fontawesome.io/) for icons.
+

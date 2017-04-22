@@ -11,8 +11,8 @@ module Params {
 	export let timesText = "times";
 	export let readLocale = "en-US";
 	export let listenLocale = "en-US";
-	export let readQuestions = true;
-	export let listenAnswers = true && SpeechCheck.isSpeechRecognitionAvailable();
+	export let readQuestions = false;
+	export let listenAnswers = false;
 	export let showHint = true;
 	export let questionMode = 'random';
 
@@ -30,10 +30,10 @@ module Params {
 					case 'show-hint':
 						showHint = value.toLowerCase() === 'true';
 						break;
-					case 'read-locale':
+					case 'output-locale':
 						readLocale = value;
 						break;
-					case 'listen-locale':
+					case 'input-locale':
 						listenLocale = value;
 						break;
 					case 'locale':
@@ -44,11 +44,11 @@ module Params {
 					case 'times-text':
 						timesText = value;
 						break;
-					case 'read-questions':
+					case 'voice-output':
 						readQuestions = value.toLowerCase() === 'true';
 						break;
-					case 'listen-answers':
-						listenAnswers = value.toLowerCase() === 'true';
+					case 'voice-input':
+						listenAnswers = value.toLowerCase() === 'true'  && SpeechCheck.isSpeechRecognitionAvailable();
 						break;
 					default:
 						console.warn(`Ignoring unknown paramter: ${key}=${value}.`);
@@ -133,18 +133,22 @@ module Questions {
 
 window.onload = function () {
 	// get relevant HTML elements
-	const html_listener_status = document.getElementById('listenerStatus');
-	const html_listener_mode = document.getElementById('listenerMode');
-	const html_reader_mode = document.getElementById('readerMode');
+	const html_recording_status = document.getElementById('recording-status');
+	const html_recorded_text = document.getElementById('recorded-text');
+	const html_recording_symbol = document.getElementById('recording-symbol');
 
-	const html_mode = document.getElementById('mode');
+	const html_input_mode = document.getElementById('input-mode');
+	const html_output_mode = document.getElementById('output-mode');
+	const html_hint_mode = document.getElementById('hint-mode');
+	const html_game_mode = document.getElementById('game-mode');
+
 	const html_score = document.getElementById('score');
+	const html_timer = document.getElementById('timer');
 	const html_points = document.getElementById('points');
 
 	const html_question = document.getElementById('question');
 	const html_attempt = document.getElementById('attempt');
 	const html_answer = document.getElementById('answer');
-	const html_add = document.getElementById('add');
 
 	// relevant key codes
 	const KEY_ENTER = 13;
@@ -169,7 +173,6 @@ window.onload = function () {
 	// how long to highlight a wrong attempt
 	const WRONG_ATTEMPT_HIGHLIGHT_TIMEOUT = 1000;
 	const RIGHT_ANSWER_HIGHLIGHT_TIMEOUT = 1000;
-	const SCORE_ADD_NOTIFICATION_TIMEOUT = 1500;
 
 	let showHintAfterSomeTime = Params.showHint;
 	let multiplicationQuestion = Questions.parse(Params.questionMode);
@@ -182,15 +185,18 @@ window.onload = function () {
 
 	let highlightWrongAnswerTimeout = 0;
 	let highlightRightAnswerTimeout = 0;
-	let addScoreNotificationTimeout = 0;
 
 	function startListening() {
-		html_listener_status.innerHTML = "<b>Speak up!</b>";
+		html_recording_symbol.innerHTML = '<span class="fa-stack fa-fw">' +
+			'<i class="fa fa-circle-o-notch fa-spin fa-stack-2x green-color"></i>' +
+			'<i class="fa fa-microphone fa-stack-1x" aria-hidden="true"></i></span>';
+
+		html_recorded_text.innerHTML = '';
 
 		Speech.initRecognition(
 			Params.listenLocale,
 			function (text: string) {
-				html_listener_status.innerHTML = "<i>" + text + "</i>";
+				html_recorded_text.innerHTML = "<i>" + text + "</i>";
 
 				// since due to continuous listening we may get multiple words
 				// and because we want the *last* word given, we split by ' '
@@ -208,7 +214,12 @@ window.onload = function () {
 	};
 
 	function stopListening() {
-		html_listener_status.innerHTML = "(Not listening. Press 'spacebar' to force listening.)";
+		html_recording_symbol.innerHTML = '<span class="fa-stack fa-fw">' +
+			'<i class="fa fa-ban fa-stack-2x red-color"></i>' +
+			'<i class="fa fa-microphone fa-stack-1x" aria-hidden="true"></i></span>';
+		
+		html_recorded_text.innerHTML = '' ;
+
 		Speech.abortRecognition();
 	};
 
@@ -279,10 +290,14 @@ window.onload = function () {
 			stopListening();
 		}
 
+		const timeOnQuestion = Date.now() - questionStartTime;
+
 		ProgressTracker.deselect();
 		highlightRightAnswerTimeout = Date.now() + RIGHT_ANSWER_HIGHLIGHT_TIMEOUT;
-		html_attempt.style.color = "orange";
-		html_attempt.innerHTML = answer + "<font size=8pt><br/><i>(now you know)</i></font>";
+		html_attempt.style.color = "#0D98BA";
+		html_attempt.innerHTML = answer
+				+ "<font size=6pt><br/><i class='fa fa-star-o fa-fw' aria-hidden='true'></i> " + 0 
+				+ '  <i class="fa fa-clock-o fa-fw" aria-hidden="true"></i> ' + Math.floor(timeOnQuestion/1000) + "s </font>";
 	};
 
 
@@ -348,10 +363,6 @@ window.onload = function () {
 
 	// hack to force window initialization although it is not a real resize
 	window.onresize(null);
-
-	// click events to toggle question format (when 'mode' is clicked and same for score for hints)
-	html_mode.onclick = switchQuestionFormat;
-	html_score.onclick = () => showHintAfterSomeTime = !showHintAfterSomeTime;
 
 	// control fps when using 'requestAnimationFrame'
 	// from: http://stackoverflow.com/questions/19764018/controlling-fps-with-requestanimationframe
@@ -457,9 +468,13 @@ window.onload = function () {
 
 		// 4. Status bar (score/max score and timer) update
 		const maxScore = MIN_SCORE + (timeOnQuestion < SCORE_TIME ? Math.round(MAX_SCORE * (1 - ((timeOnQuestion + 1) / SCORE_TIME))) : 0);
-		html_points.innerHTML = 'max. points: ' + maxScore + ' (' + (Math.floor(timeOnQuestion / 1000)) + 's)';
-		html_mode.innerHTML = multiplicationQuestion === Questions.Random.ask ? 'Random' : 'Sequential';
-		html_score.innerHTML = (showHintAfterSomeTime ? ' [help on] ' : '') + 'score: ' + score;
+
+		// fills starts based on how much of the max score is left
+		const starIcon = maxScore <= 10 ? 'fa-star-o' : maxScore >= 50 ? 'fa-star' : 'fa-star-half-o';
+
+		html_score.innerHTML = '<i class="fa fa-trophy fa-fw" aria-hidden="true"></i> ' + score;
+		html_points.innerHTML = '<i class="fa ' + starIcon + ' fa-fw" aria-hidden="true"></i> ' + maxScore;
+		html_timer.innerHTML = '<i class="fa fa-clock-o fa-fw" aria-hidden="true"></i> ' + (Math.floor(timeOnQuestion / 1000)) + 's'
 
 		// 5. Timeout counters update
 
@@ -471,13 +486,7 @@ window.onload = function () {
 			}
 			score += maxScore;
 
-			// score increase notification timeout to SCORE_ADD_NOTIFICATION_TIMEOUT after correct answer
-			// intentionally only shows last obtained score
-			addScoreNotificationTimeout = Date.now() + SCORE_ADD_NOTIFICATION_TIMEOUT;
-			html_add.innerHTML = '+' + maxScore + '!';
-
 			const color = maxScore > 50 ? ProgressTracker.GREEN : (maxScore <= 10 ? ProgressTracker.RED : ProgressTracker.YELLOW);
-			const message = maxScore > 50 ? "Excellent!!" : (maxScore <= 10 ? "Correct." : "Good!");
 
 			ProgressTracker.deselect(color);
 
@@ -486,14 +495,10 @@ window.onload = function () {
 
 			// TODO: Figure out a font size so that these two do not fall off screen when the screen is too small.
 			// hackish way to give some more feedback to the user about the time-to-answer performance
-			const htmlMessage = "<font size=10pt><br/><i>" + message + "</i></font>";
 			const htmlPoints = "<font size=6pt><br/><i>(+" + maxScore + " points)</i></font>";
-			html_attempt.innerHTML = answer + htmlMessage + htmlPoints;
-		}
-
-		// remove add score notification if we are already past the set timeout
-		if (Date.now() > addScoreNotificationTimeout) {
-			html_add.innerHTML = '';
+			html_attempt.innerHTML = answer
+				+ "<font size=6pt><br/><i class='fa " + starIcon + " fa-fw' aria-hidden='true'></i> " + maxScore 
+				+ '  <i class="fa fa-clock-o fa-fw" aria-hidden="true"></i> ' + Math.floor(timeOnQuestion/1000) + "s </font>";
 		}
 	};
 
@@ -501,25 +506,72 @@ window.onload = function () {
 	// Startup Logic
 	//
 
+	// === Hints === //
+
+	function showHint(showHint: boolean) {
+		html_hint_mode.innerHTML = '<span class="fa-stack fa-fw">' +
+			'<i class="fa fa-square-o fa-stack-2x"></i>' +
+			'<i class="fa fa-life-saver fa-stack-1x" aria-hidden="true"></i></span> Hints <b>' + (showHintAfterSomeTime ? 'on' : 'off') + '</b>.';
+	};
+
+	// click events to toggle question format (when 'mode' is clicked and same for score for hints)
+	html_hint_mode.onclick = function () {
+		showHintAfterSomeTime = !showHintAfterSomeTime;
+		showHint(showHintAfterSomeTime);
+	};
+	html_hint_mode.title = 'Press to toggle showing hints.'
+
+	// === Game Mode === //
+
+	function showGameMode(mode: () => [number, number]) {
+		const icon = mode === Questions.Random.ask ? '<i class="fa fa-random fa-stack-1x" aria-hidden="true"></i>' : '<i class="fa fa-long-arrow-right fa-stack-1x" aria-hidden="true"></i>';
+		const text = mode === Questions.Random.ask ? 'random' : 'sequential';
+		html_game_mode.innerHTML = '<span class="fa-stack fa-fw"><i class="fa fa-square-o fa-stack-2x"></i>' + icon +
+			'</span> Mode <b>' + text + '</b>.';
+	};
+
+	html_game_mode.onclick = function () {
+		switchQuestionFormat();
+		showGameMode(multiplicationQuestion);
+	};
+	html_game_mode.title = 'Press to switch between sequential/random modes.'
+
+	// === Input === //
+
 	if (Params.listenAnswers) {
-		html_listener_mode.innerHTML = "Listening answers in " + Params.listenLocale + ".";
+		html_input_mode.innerHTML = '<span class="fa-stack fa-fw">' +
+			'<i class="fa fa-square-o fa-stack-2x"></i>' +
+			'<i class="fa fa-microphone fa-stack-1x" aria-hidden="true"></i></span> Input in <b>' + Params.listenLocale + '</b>.';
 
 		// force listener restart in case listening failed to start for some reason
-		html_listener_status.title = "Click to force speech recognition restart.";
-		html_listener_status.onclick = forceSpeechRecognitionRestart;
+		html_recording_status.title = "Click or press 'spacebar' to force speech recognition restart.";
+		html_recording_status.onclick = forceSpeechRecognitionRestart;
 	} else {
 		if (SpeechCheck.isSpeechRecognitionAvailable()) {
-			html_listener_mode.innerHTML = "Listening answers disabled (but available).";
+			html_input_mode.innerHTML = '<span class="fa-stack fa-fw">' +
+				'<i class="fa fa-square-o fa-stack-2x"></i>' +
+				'<i class="fa fa-microphone-slash fa-stack-1x" aria-hidden="true"></i></span> Input disabled.';
 		} else {
-			html_listener_mode.innerHTML = "Listening answers unavailable.";
+			html_input_mode.innerHTML = '<span class="fa-stack fa-fw">' +
+				'<i class="fa fa-square-o fa-stack-2x"></i>' +
+				'<i class="fa fa-microphone fa-stack-1x" aria-hidden="true"></i></span> Input unavailable.';
 		}
 	}
 
+	// === Output === //
+
 	if (Params.readQuestions) {
-		html_reader_mode.innerHTML = "Reading questions in " + Params.readLocale + ".";
+		const icon = '<span class="fa-stack fa-fw"><i class="fa fa-square-o fa-stack-2x"></i><i class="fa fa-volume-up fa-stack-1x"></i></span>';
+		html_output_mode.innerHTML = icon + ' Output in <b>' + Params.readLocale + "</b>.";
 	} else {
-		html_reader_mode.innerHTML = "Reading questions disabled.";
+		const icon = '<span class="fa-stack fa-fw"><i class="fa fa-square-o fa-stack-2x"></i><i class="fa fa-volume-off fa-stack-1x"></i></span>';
+		html_output_mode.innerHTML = icon + " Output disabled.";
 	}
+
+	// === Initial Status === //
+
+	showHint(showHintAfterSomeTime);
+	showGameMode(multiplicationQuestion);
 
 	// get the initial question
 	nextQuestion();

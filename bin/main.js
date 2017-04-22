@@ -3,8 +3,8 @@ var Params;
     Params.timesText = "times";
     Params.readLocale = "en-US";
     Params.listenLocale = "en-US";
-    Params.readQuestions = true;
-    Params.listenAnswers = true && SpeechCheck.isSpeechRecognitionAvailable();
+    Params.readQuestions = false;
+    Params.listenAnswers = false;
     Params.showHint = true;
     Params.questionMode = 'random';
     var splitParameters = document.URL.split('?');
@@ -21,10 +21,10 @@ var Params;
                     case 'show-hint':
                         Params.showHint = value.toLowerCase() === 'true';
                         break;
-                    case 'read-locale':
+                    case 'output-locale':
                         Params.readLocale = value;
                         break;
-                    case 'listen-locale':
+                    case 'input-locale':
                         Params.listenLocale = value;
                         break;
                     case 'locale':
@@ -34,11 +34,11 @@ var Params;
                     case 'times-text':
                         Params.timesText = value;
                         break;
-                    case 'read-questions':
+                    case 'voice-output':
                         Params.readQuestions = value.toLowerCase() === 'true';
                         break;
-                    case 'listen-answers':
-                        Params.listenAnswers = value.toLowerCase() === 'true';
+                    case 'voice-input':
+                        Params.listenAnswers = value.toLowerCase() === 'true' && SpeechCheck.isSpeechRecognitionAvailable();
                         break;
                     default:
                         console.warn("Ignoring unknown paramter: " + key + "=" + value + ".");
@@ -109,16 +109,19 @@ var Questions;
 })(Questions || (Questions = {}));
 ;
 window.onload = function () {
-    var html_listener_status = document.getElementById('listenerStatus');
-    var html_listener_mode = document.getElementById('listenerMode');
-    var html_reader_mode = document.getElementById('readerMode');
-    var html_mode = document.getElementById('mode');
+    var html_recording_status = document.getElementById('recording-status');
+    var html_recorded_text = document.getElementById('recorded-text');
+    var html_recording_symbol = document.getElementById('recording-symbol');
+    var html_input_mode = document.getElementById('input-mode');
+    var html_output_mode = document.getElementById('output-mode');
+    var html_hint_mode = document.getElementById('hint-mode');
+    var html_game_mode = document.getElementById('game-mode');
     var html_score = document.getElementById('score');
+    var html_timer = document.getElementById('timer');
     var html_points = document.getElementById('points');
     var html_question = document.getElementById('question');
     var html_attempt = document.getElementById('attempt');
     var html_answer = document.getElementById('answer');
-    var html_add = document.getElementById('add');
     var KEY_ENTER = 13;
     var KEY_SPACEBAR = 32;
     var KEY_H = 72;
@@ -133,7 +136,6 @@ window.onload = function () {
     var SCORE_TIME = 7000;
     var WRONG_ATTEMPT_HIGHLIGHT_TIMEOUT = 1000;
     var RIGHT_ANSWER_HIGHLIGHT_TIMEOUT = 1000;
-    var SCORE_ADD_NOTIFICATION_TIMEOUT = 1500;
     var showHintAfterSomeTime = Params.showHint;
     var multiplicationQuestion = Questions.parse(Params.questionMode);
     var score = 0;
@@ -143,11 +145,13 @@ window.onload = function () {
     var questionStartTime = 0;
     var highlightWrongAnswerTimeout = 0;
     var highlightRightAnswerTimeout = 0;
-    var addScoreNotificationTimeout = 0;
     function startListening() {
-        html_listener_status.innerHTML = "<b>Speak up!</b>";
+        html_recording_symbol.innerHTML = '<span class="fa-stack fa-fw">' +
+            '<i class="fa fa-circle-o-notch fa-spin fa-stack-2x green-color"></i>' +
+            '<i class="fa fa-microphone fa-stack-1x" aria-hidden="true"></i></span>';
+        html_recorded_text.innerHTML = '';
         Speech.initRecognition(Params.listenLocale, function (text) {
-            html_listener_status.innerHTML = "<i>" + text + "</i>";
+            html_recorded_text.innerHTML = "<i>" + text + "</i>";
             var lastWord = text.split(' ');
             lastWord = lastWord[lastWord.length - 1];
             var numbersOnly = lastWord.replace(/\D/g, '');
@@ -159,7 +163,10 @@ window.onload = function () {
     }
     ;
     function stopListening() {
-        html_listener_status.innerHTML = "(Not listening. Press 'spacebar' to force listening.)";
+        html_recording_symbol.innerHTML = '<span class="fa-stack fa-fw">' +
+            '<i class="fa fa-ban fa-stack-2x red-color"></i>' +
+            '<i class="fa fa-microphone fa-stack-1x" aria-hidden="true"></i></span>';
+        html_recorded_text.innerHTML = '';
         Speech.abortRecognition();
     }
     ;
@@ -201,10 +208,13 @@ window.onload = function () {
         if (Params.listenAnswers) {
             stopListening();
         }
+        var timeOnQuestion = Date.now() - questionStartTime;
         ProgressTracker.deselect();
         highlightRightAnswerTimeout = Date.now() + RIGHT_ANSWER_HIGHLIGHT_TIMEOUT;
-        html_attempt.style.color = "orange";
-        html_attempt.innerHTML = answer + "<font size=8pt><br/><i>(now you know)</i></font>";
+        html_attempt.style.color = "#0D98BA";
+        html_attempt.innerHTML = answer
+            + "<font size=6pt><br/><i class='fa fa-star-o fa-fw' aria-hidden='true'></i> " + 0
+            + '  <i class="fa fa-clock-o fa-fw" aria-hidden="true"></i> ' + Math.floor(timeOnQuestion / 1000) + "s </font>";
     }
     ;
     function switchQuestionFormat() {
@@ -251,8 +261,6 @@ window.onload = function () {
         ProgressTracker.init(window.innerWidth, window.innerHeight, FRACTIONS);
     };
     window.onresize(null);
-    html_mode.onclick = switchQuestionFormat;
-    html_score.onclick = function () { return showHintAfterSomeTime = !showHintAfterSomeTime; };
     function loop(fps, callback) {
         var fpsInterval = 1000 / fps;
         var then = Date.now();
@@ -319,49 +327,78 @@ window.onload = function () {
             html_answer.style.textShadow = "none";
         }
         var maxScore = MIN_SCORE + (timeOnQuestion < SCORE_TIME ? Math.round(MAX_SCORE * (1 - ((timeOnQuestion + 1) / SCORE_TIME))) : 0);
-        html_points.innerHTML = 'max. points: ' + maxScore + ' (' + (Math.floor(timeOnQuestion / 1000)) + 's)';
-        html_mode.innerHTML = multiplicationQuestion === Questions.Random.ask ? 'Random' : 'Sequential';
-        html_score.innerHTML = (showHintAfterSomeTime ? ' [help on] ' : '') + 'score: ' + score;
+        var starIcon = maxScore <= 10 ? 'fa-star-o' : maxScore >= 50 ? 'fa-star' : 'fa-star-half-o';
+        html_score.innerHTML = '<i class="fa fa-trophy fa-fw" aria-hidden="true"></i> ' + score;
+        html_points.innerHTML = '<i class="fa ' + starIcon + ' fa-fw" aria-hidden="true"></i> ' + maxScore;
+        html_timer.innerHTML = '<i class="fa fa-clock-o fa-fw" aria-hidden="true"></i> ' + (Math.floor(timeOnQuestion / 1000)) + 's';
         if (attempt === answer) {
             if (Params.listenAnswers) {
                 stopListening();
             }
             score += maxScore;
-            addScoreNotificationTimeout = Date.now() + SCORE_ADD_NOTIFICATION_TIMEOUT;
-            html_add.innerHTML = '+' + maxScore + '!';
             var color = maxScore > 50 ? ProgressTracker.GREEN : (maxScore <= 10 ? ProgressTracker.RED : ProgressTracker.YELLOW);
-            var message = maxScore > 50 ? "Excellent!!" : (maxScore <= 10 ? "Correct." : "Good!");
             ProgressTracker.deselect(color);
             highlightRightAnswerTimeout = Date.now() + RIGHT_ANSWER_HIGHLIGHT_TIMEOUT;
             html_attempt.style.color = "green";
-            var htmlMessage = "<font size=10pt><br/><i>" + message + "</i></font>";
             var htmlPoints = "<font size=6pt><br/><i>(+" + maxScore + " points)</i></font>";
-            html_attempt.innerHTML = answer + htmlMessage + htmlPoints;
-        }
-        if (Date.now() > addScoreNotificationTimeout) {
-            html_add.innerHTML = '';
+            html_attempt.innerHTML = answer
+                + "<font size=6pt><br/><i class='fa " + starIcon + " fa-fw' aria-hidden='true'></i> " + maxScore
+                + '  <i class="fa fa-clock-o fa-fw" aria-hidden="true"></i> ' + Math.floor(timeOnQuestion / 1000) + "s </font>";
         }
     }
     ;
+    function showHint(showHint) {
+        html_hint_mode.innerHTML = '<span class="fa-stack fa-fw">' +
+            '<i class="fa fa-square-o fa-stack-2x"></i>' +
+            '<i class="fa fa-life-saver fa-stack-1x" aria-hidden="true"></i></span> Hints <b>' + (showHintAfterSomeTime ? 'on' : 'off') + '</b>.';
+    }
+    ;
+    html_hint_mode.onclick = function () {
+        showHintAfterSomeTime = !showHintAfterSomeTime;
+        showHint(showHintAfterSomeTime);
+    };
+    html_hint_mode.title = 'Press to toggle showing hints.';
+    function showGameMode(mode) {
+        var icon = mode === Questions.Random.ask ? '<i class="fa fa-random fa-stack-1x" aria-hidden="true"></i>' : '<i class="fa fa-long-arrow-right fa-stack-1x" aria-hidden="true"></i>';
+        var text = mode === Questions.Random.ask ? 'random' : 'sequential';
+        html_game_mode.innerHTML = '<span class="fa-stack fa-fw"><i class="fa fa-square-o fa-stack-2x"></i>' + icon +
+            '</span> Mode <b>' + text + '</b>.';
+    }
+    ;
+    html_game_mode.onclick = function () {
+        switchQuestionFormat();
+        showGameMode(multiplicationQuestion);
+    };
+    html_game_mode.title = 'Press to switch between sequential/random modes.';
     if (Params.listenAnswers) {
-        html_listener_mode.innerHTML = "Listening answers in " + Params.listenLocale + ".";
-        html_listener_status.title = "Click to force speech recognition restart.";
-        html_listener_status.onclick = forceSpeechRecognitionRestart;
+        html_input_mode.innerHTML = '<span class="fa-stack fa-fw">' +
+            '<i class="fa fa-square-o fa-stack-2x"></i>' +
+            '<i class="fa fa-microphone fa-stack-1x" aria-hidden="true"></i></span> Input in <b>' + Params.listenLocale + '</b>.';
+        html_recording_status.title = "Click or press 'spacebar' to force speech recognition restart.";
+        html_recording_status.onclick = forceSpeechRecognitionRestart;
     }
     else {
         if (SpeechCheck.isSpeechRecognitionAvailable()) {
-            html_listener_mode.innerHTML = "Listening answers disabled (but available).";
+            html_input_mode.innerHTML = '<span class="fa-stack fa-fw">' +
+                '<i class="fa fa-square-o fa-stack-2x"></i>' +
+                '<i class="fa fa-microphone-slash fa-stack-1x" aria-hidden="true"></i></span> Input disabled.';
         }
         else {
-            html_listener_mode.innerHTML = "Listening answers unavailable.";
+            html_input_mode.innerHTML = '<span class="fa-stack fa-fw">' +
+                '<i class="fa fa-square-o fa-stack-2x"></i>' +
+                '<i class="fa fa-microphone fa-stack-1x" aria-hidden="true"></i></span> Input unavailable.';
         }
     }
     if (Params.readQuestions) {
-        html_reader_mode.innerHTML = "Reading questions in " + Params.readLocale + ".";
+        var icon = '<span class="fa-stack fa-fw"><i class="fa fa-square-o fa-stack-2x"></i><i class="fa fa-volume-up fa-stack-1x"></i></span>';
+        html_output_mode.innerHTML = icon + ' Output in <b>' + Params.readLocale + "</b>.";
     }
     else {
-        html_reader_mode.innerHTML = "Reading questions disabled.";
+        var icon = '<span class="fa-stack fa-fw"><i class="fa fa-square-o fa-stack-2x"></i><i class="fa fa-volume-off fa-stack-1x"></i></span>';
+        html_output_mode.innerHTML = icon + " Output disabled.";
     }
+    showHint(showHintAfterSomeTime);
+    showGameMode(multiplicationQuestion);
     nextQuestion();
     loop(10, update);
 };
