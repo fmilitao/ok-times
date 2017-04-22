@@ -30,10 +30,14 @@ module Talk {
     ) {
         const msg = new SpeechSynthesisUtterance();
         msg.onend = callback;
+        // msg.onerror
+        // msg.onstart
         msg.text = message;
         msg.lang = locale;
+        // FIXME filter by name instead?
+        // msg.voice for picking the voice.
 
-        window.speechSynthesis.speak(msg);
+        speechSynthesis.speak(msg);
     }
 
     // The declaration and auxiliary variable are just to get around typescript
@@ -42,13 +46,13 @@ module Talk {
     declare const Set: any;
     const Arrays: any = Array;
 
-    export function asyncCheckVoice(check: (voices: string[]) => void) {
-        window.speechSynthesis.onvoiceschanged = function () {
-            // extract only the voices strings
-            const voicesLangs = window.speechSynthesis
-                .getVoices().map(x => x.lang);
+    export function asyncCheckVoice(check: (voices: string[], defaultVoice: string) => void) {
+        speechSynthesis.onvoiceschanged = function () {
+            const voices = speechSynthesis.getVoices();
+            const voicesLangs = voices.map(x => x.lang);
+            const defaultVoice = voices.filter(x => x.default).map(x => x.lang)[0];
 
-            check(Arrays.from(new Set(voicesLangs).values()));
+            check(Arrays.from(new Set(voicesLangs).values()), defaultVoice);
         };
     };
 
@@ -56,7 +60,14 @@ module Talk {
      * Stops speaking immediately.
      */
     export function quiet() {
-        window.speechSynthesis.cancel();
+        speechSynthesis.cancel();
+    }
+
+    /**
+     * Whether the speech synthesis type is available.
+     */
+    export function isSpeechSynthesisAvailable() {
+        return (typeof speechSynthesis) !== 'undefined';
     }
 }
 

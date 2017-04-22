@@ -50,7 +50,7 @@ module Params {
 		}
 	}
 
-	export let readQuestions = readLocale !== "";
+	export let readQuestions = readLocale !== "" && Talk.isSpeechSynthesisAvailable();
 	export let listenAnswers = listenLocale !== "" && SpeechCheck.isSpeechRecognitionAvailable();
 };
 
@@ -559,7 +559,7 @@ window.onload = function () {
 		const icon = '<span class="fa-stack fa-fw"><i class="fa fa-square-o fa-stack-2x"></i><i class="fa fa-volume-up fa-stack-1x"></i></span>';
 		html_output_mode.innerHTML = icon + ' Output in <b>' + Params.readLocale + "</b>.";
 
-		Talk.asyncCheckVoice(voices => {
+		Talk.asyncCheckVoice( (voices, defaultVoice) => {
 			const readLocaleVoiceExists = voices.indexOf(Params.readLocale) !== -1;
 			if (!readLocaleVoiceExists) {
 				html_output_mode.innerHTML = icon + ' Voice <s>' + Params.readLocale + "</s> unavailable. (Click to list.)";
@@ -571,7 +571,11 @@ window.onload = function () {
 		});
 	} else {
 		const icon = '<span class="fa-stack fa-fw"><i class="fa fa-square-o fa-stack-2x"></i><i class="fa fa-volume-off fa-stack-1x"></i></span>';
-		html_output_mode.innerHTML = icon + " Output disabled.";
+		if (Talk.isSpeechSynthesisAvailable()) {
+			html_output_mode.innerHTML = icon + " Output disabled.";
+		} else {
+			html_output_mode.innerHTML = icon + " Output unavailable.";
+		}
 	}
 
 	// === Initial Status === //

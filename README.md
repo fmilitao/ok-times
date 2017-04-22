@@ -52,6 +52,7 @@ Finally, there are also a few URL parameters:
 * For some reason, rendering SVGs with blur in Firefox is horribly slow.
 * Speech recognition only works in Chrome.
 * Speech recognition is off while speech synthesis is speaking, so you will have to wait until speech synthesis ends before you can answer. (But the score timers will not wait for this.) This pause is done to avoid the speech synthesis output to be used in speech recognition. If this becomes a problem, you can just turn off speech synthesis.
+* [List of Google speech recognition languages](https://cloud.google.com/speech/docs/languages).
 
 ## Extra Credits
 

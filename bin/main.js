@@ -39,7 +39,7 @@ var Params;
             }
         }
     }
-    Params.readQuestions = Params.readLocale !== "";
+    Params.readQuestions = Params.readLocale !== "" && Talk.isSpeechSynthesisAvailable();
     Params.listenAnswers = Params.listenLocale !== "" && SpeechCheck.isSpeechRecognitionAvailable();
 })(Params || (Params = {}));
 ;
@@ -386,7 +386,7 @@ window.onload = function () {
     if (Params.readQuestions) {
         var icon_1 = '<span class="fa-stack fa-fw"><i class="fa fa-square-o fa-stack-2x"></i><i class="fa fa-volume-up fa-stack-1x"></i></span>';
         html_output_mode.innerHTML = icon_1 + ' Output in <b>' + Params.readLocale + "</b>.";
-        Talk.asyncCheckVoice(function (voices) {
+        Talk.asyncCheckVoice(function (voices, defaultVoice) {
             var readLocaleVoiceExists = voices.indexOf(Params.readLocale) !== -1;
             if (!readLocaleVoiceExists) {
                 html_output_mode.innerHTML = icon_1 + ' Voice <s>' + Params.readLocale + "</s> unavailable. (Click to list.)";
@@ -399,7 +399,12 @@ window.onload = function () {
     }
     else {
         var icon = '<span class="fa-stack fa-fw"><i class="fa fa-square-o fa-stack-2x"></i><i class="fa fa-volume-off fa-stack-1x"></i></span>';
-        html_output_mode.innerHTML = icon + " Output disabled.";
+        if (Talk.isSpeechSynthesisAvailable()) {
+            html_output_mode.innerHTML = icon + " Output disabled.";
+        }
+        else {
+            html_output_mode.innerHTML = icon + " Output unavailable.";
+        }
     }
     showHint(showHintAfterSomeTime);
     showGameMode(multiplicationQuestion);

@@ -14,23 +14,28 @@ var Talk;
         msg.onend = callback;
         msg.text = message;
         msg.lang = locale;
-        window.speechSynthesis.speak(msg);
+        speechSynthesis.speak(msg);
     }
     Talk.say = say;
     var Arrays = Array;
     function asyncCheckVoice(check) {
-        window.speechSynthesis.onvoiceschanged = function () {
-            var voicesLangs = window.speechSynthesis
-                .getVoices().map(function (x) { return x.lang; });
-            check(Arrays.from(new Set(voicesLangs).values()));
+        speechSynthesis.onvoiceschanged = function () {
+            var voices = speechSynthesis.getVoices();
+            var voicesLangs = voices.map(function (x) { return x.lang; });
+            var defaultVoice = voices.filter(function (x) { return x.default; }).map(function (x) { return x.lang; })[0];
+            check(Arrays.from(new Set(voicesLangs).values()), defaultVoice);
         };
     }
     Talk.asyncCheckVoice = asyncCheckVoice;
     ;
     function quiet() {
-        window.speechSynthesis.cancel();
+        speechSynthesis.cancel();
     }
     Talk.quiet = quiet;
+    function isSpeechSynthesisAvailable() {
+        return (typeof speechSynthesis) !== 'undefined';
+    }
+    Talk.isSpeechSynthesisAvailable = isSpeechSynthesisAvailable;
 })(Talk || (Talk = {}));
 var Speech;
 (function (Speech) {
