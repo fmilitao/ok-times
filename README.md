@@ -57,4 +57,5 @@ Finally, there are also a few URL parameters:
 ## Extra Credits
 
 * Uses the awesome [Font Awesome](http://fontawesome.io/) for icons.
+* [Google Developers blog post](https://developers.google.com/web/updates/2013/01/Voice-Driven-Web-Apps-Introduction-to-the-Web-Speech-API) on using web speech API.
 

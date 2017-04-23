@@ -5,14 +5,21 @@
 declare const webkitSpeechRecognition: any;
 declare const webkitSpeechGrammarList: any;
 
-module SpeechCheck {
+module BrowserChecks {
     /**
      * Whether the speech recognition types are available.
      */
     export function isSpeechRecognitionAvailable() {
         return (typeof webkitSpeechRecognition) !== 'undefined' &&
             (typeof webkitSpeechGrammarList) !== 'undefined';
-    }
+    };
+
+    /**
+     * Whether the speech synthesis type is available.
+     */
+    export function isSpeechSynthesisAvailable() {
+        return (typeof speechSynthesis) !== 'undefined';
+    };
 }
 
 module Talk {
@@ -38,7 +45,7 @@ module Talk {
         // msg.voice for picking the voice.
 
         speechSynthesis.speak(msg);
-    }
+    };
 
     // The declaration and auxiliary variable are just to get around typescript
     // not knowing about ES6 features. Since we want to use them, this will effectively
@@ -61,14 +68,7 @@ module Talk {
      */
     export function quiet() {
         speechSynthesis.cancel();
-    }
-
-    /**
-     * Whether the speech synthesis type is available.
-     */
-    export function isSpeechSynthesisAvailable() {
-        return (typeof speechSynthesis) !== 'undefined';
-    }
+    };
 }
 
 module Speech {
@@ -79,6 +79,12 @@ module Speech {
     speechRecognitionList.addFromString(grammar, 1);
 
     let recognition: any = null;
+
+    // dummy call back that does nothing when called.
+    const DUMMY_CALLBACK = (argument: string) => { /* intentionally empty */ };
+
+    let onErrorCallback: (error: string) => void = DUMMY_CALLBACK;
+    let onResultCallback: (result: string) => void = DUMMY_CALLBACK;
 
     /**
      * Aborts recognition, ignoring the final result if it was not
@@ -96,12 +102,8 @@ module Speech {
      * Start speech recognition.
      * 
      * @param locale the locale of the speech recognition (i.e. "en-US" or "pt-PT").
-     * @param onresult the function to handle partial and full results of the recognition.
      */
-    export function initRecognition(
-        locale: string,
-        onresult: (text: string) => void
-    ) {
+    export function startRecognition(locale: string) {
         // just to be sure that there are no other recognition going on.
         abortRecognition();
 
@@ -143,9 +145,26 @@ module Speech {
             if (final_transcript === '') {
                 final_transcript = interim_transcript.trim();
             }
-            onresult(final_transcript);
+            onResultCallback(final_transcript);
         }
 
+        recognition.onerror = function (event: any) {
+            onErrorCallback(event.error);
+        };
         recognition.start();
-    }
+    };
+
+    /**
+     * Sets the callback for errors.
+     */
+    export function setOnErrorCallback(callback: (error: string) => void) {
+        onErrorCallback = callback;
+    };
+
+    /**
+     * Sets the callback for results.
+     */
+    export function setOnResult(callback: (result: string) => void) {
+        onResultCallback = callback;
+    };
 }

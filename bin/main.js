@@ -1,8 +1,8 @@
 var Params;
 (function (Params) {
     Params.timesText = "times";
-    Params.readLocale = "";
-    Params.listenLocale = "";
+    Params.outputLocale = "";
+    Params.inputLocale = "";
     Params.showHint = true;
     Params.questionMode = 'random';
     var splitParameters = document.URL.split('?');
@@ -20,14 +20,14 @@ var Params;
                         Params.showHint = value.toLowerCase() === 'true';
                         break;
                     case 'output-locale':
-                        Params.readLocale = value;
+                        Params.outputLocale = value;
                         break;
                     case 'input-locale':
-                        Params.listenLocale = value;
+                        Params.inputLocale = value;
                         break;
                     case 'locale':
-                        Params.readLocale = value;
-                        Params.listenLocale = value;
+                        Params.outputLocale = value;
+                        Params.inputLocale = value;
                         break;
                     case 'times-text':
                         Params.timesText = value;
@@ -39,8 +39,8 @@ var Params;
             }
         }
     }
-    Params.readQuestions = Params.readLocale !== "" && Talk.isSpeechSynthesisAvailable();
-    Params.listenAnswers = Params.listenLocale !== "" && SpeechCheck.isSpeechRecognitionAvailable();
+    Params.readQuestions = Params.outputLocale !== "" && BrowserChecks.isSpeechSynthesisAvailable();
+    Params.listenAnswers = Params.inputLocale !== "" && BrowserChecks.isSpeechRecognitionAvailable();
 })(Params || (Params = {}));
 ;
 var Questions;
@@ -144,16 +144,7 @@ window.onload = function () {
             '<i class="fa fa-circle-o-notch fa-spin fa-stack-2x green-color"></i>' +
             '<i class="fa fa-microphone fa-stack-1x" aria-hidden="true"></i></span>';
         html_recorded_text.innerHTML = '';
-        Speech.initRecognition(Params.listenLocale, function (text) {
-            html_recorded_text.innerHTML = "<i>" + text + "</i>";
-            var lastWord = text.split(' ');
-            lastWord = lastWord[lastWord.length - 1];
-            var numbersOnly = lastWord.replace(/\D/g, '');
-            if (numbersOnly.length > 0) {
-                updateAttempt(parseInt(numbersOnly));
-                update();
-            }
-        });
+        Speech.startRecognition(Params.inputLocale);
     }
     ;
     function stopListening() {
@@ -173,7 +164,7 @@ window.onload = function () {
         }
         if (Params.listenAnswers && Params.readQuestions) {
             stopListening();
-            Talk.say(x + " " + Params.timesText + " " + y, Params.readLocale, function (event) {
+            Talk.say(x + " " + Params.timesText + " " + y, Params.outputLocale, function (event) {
                 if (highlightRightAnswerTimeout === 0) {
                     startListening();
                 }
@@ -184,7 +175,7 @@ window.onload = function () {
         }
         else {
             if (Params.readQuestions) {
-                Talk.say(x + " " + Params.timesText + " " + y, Params.readLocale);
+                Talk.say(x + " " + Params.timesText + " " + y, Params.outputLocale);
             }
             if (Params.listenAnswers) {
                 stopListening();
@@ -365,41 +356,54 @@ window.onload = function () {
     };
     html_game_mode.title = 'Press to switch between sequential/random modes.';
     if (Params.listenAnswers) {
+        Speech.setOnResult(function (text) {
+            html_recorded_text.innerHTML = "<i>" + text + "</i>";
+            var lastWord = text.split(' ');
+            lastWord = lastWord[lastWord.length - 1];
+            var numbersOnly = lastWord.replace(/\D/g, '');
+            if (numbersOnly.length > 0) {
+                updateAttempt(parseInt(numbersOnly));
+                update();
+            }
+        });
+        Speech.setOnErrorCallback(function (error) {
+            var icon = '<span class="fa-stack fa-fw"><i class="fa fa-square-o fa-stack-2x"></i>' +
+                '<i class="fa fa-microphone-slash fa-stack-1x" aria-hidden="true"></i></span>';
+            html_input_mode.innerHTML = icon + ' Input error: <i>' + error + '</I>.';
+        });
         html_input_mode.innerHTML = '<span class="fa-stack fa-fw">' +
             '<i class="fa fa-square-o fa-stack-2x"></i>' +
-            '<i class="fa fa-microphone fa-stack-1x" aria-hidden="true"></i></span> Input in <b>' + Params.listenLocale + '</b>.';
+            '<i class="fa fa-microphone fa-stack-1x" aria-hidden="true"></i></span> Input in <b>' + Params.inputLocale + '</b>.';
         html_recording_status.title = "Click or press 'spacebar' to force speech recognition restart.";
         html_recording_status.onclick = forceSpeechRecognitionRestart;
     }
     else {
-        if (SpeechCheck.isSpeechRecognitionAvailable()) {
-            html_input_mode.innerHTML = '<span class="fa-stack fa-fw">' +
-                '<i class="fa fa-square-o fa-stack-2x"></i>' +
-                '<i class="fa fa-microphone-slash fa-stack-1x" aria-hidden="true"></i></span> Input disabled.';
+        var icon = '<span class="fa-stack fa-fw"><i class="fa fa-square-o fa-stack-2x"></i>' +
+            '<i class="fa fa-microphone-slash fa-stack-1x" aria-hidden="true"></i></span>';
+        if (BrowserChecks.isSpeechRecognitionAvailable()) {
+            html_input_mode.innerHTML = icon + ' Input disabled.';
         }
         else {
-            html_input_mode.innerHTML = '<span class="fa-stack fa-fw">' +
-                '<i class="fa fa-square-o fa-stack-2x"></i>' +
-                '<i class="fa fa-microphone fa-stack-1x" aria-hidden="true"></i></span> Input unavailable.';
+            html_input_mode.innerHTML = icon + ' Input unavailable.';
         }
     }
     if (Params.readQuestions) {
         var icon_1 = '<span class="fa-stack fa-fw"><i class="fa fa-square-o fa-stack-2x"></i><i class="fa fa-volume-up fa-stack-1x"></i></span>';
-        html_output_mode.innerHTML = icon_1 + ' Output in <b>' + Params.readLocale + "</b>.";
+        html_output_mode.innerHTML = icon_1 + ' Output in <b>' + Params.outputLocale + "</b>.";
         Talk.asyncCheckVoice(function (voices, defaultVoice) {
-            var readLocaleVoiceExists = voices.indexOf(Params.readLocale) !== -1;
+            var readLocaleVoiceExists = voices.indexOf(Params.outputLocale) !== -1;
             if (!readLocaleVoiceExists) {
-                html_output_mode.innerHTML = icon_1 + ' Voice <s>' + Params.readLocale + "</s> unavailable. (Click to list.)";
+                html_output_mode.innerHTML = icon_1 + ' Voice <s>' + Params.outputLocale + "</s> unavailable. (Click to list.)";
                 html_output_mode.onclick = function () {
                     html_output_mode.innerHTML = icon_1 + ' Known voices: ' + voices + ".";
                 };
-                console.warn("Voice " + Params.readLocale + " not found. Try one of these voices: " + voices + " instead.");
+                console.warn("Voice " + Params.outputLocale + " not found. Try one of these voices: " + voices + " instead.");
             }
         });
     }
     else {
         var icon = '<span class="fa-stack fa-fw"><i class="fa fa-square-o fa-stack-2x"></i><i class="fa fa-volume-off fa-stack-1x"></i></span>';
-        if (Talk.isSpeechSynthesisAvailable()) {
+        if (BrowserChecks.isSpeechSynthesisAvailable()) {
             html_output_mode.innerHTML = icon + " Output disabled.";
         }
         else {

@@ -1,11 +1,17 @@
-var SpeechCheck;
-(function (SpeechCheck) {
+var BrowserChecks;
+(function (BrowserChecks) {
     function isSpeechRecognitionAvailable() {
         return (typeof webkitSpeechRecognition) !== 'undefined' &&
             (typeof webkitSpeechGrammarList) !== 'undefined';
     }
-    SpeechCheck.isSpeechRecognitionAvailable = isSpeechRecognitionAvailable;
-})(SpeechCheck || (SpeechCheck = {}));
+    BrowserChecks.isSpeechRecognitionAvailable = isSpeechRecognitionAvailable;
+    ;
+    function isSpeechSynthesisAvailable() {
+        return (typeof speechSynthesis) !== 'undefined';
+    }
+    BrowserChecks.isSpeechSynthesisAvailable = isSpeechSynthesisAvailable;
+    ;
+})(BrowserChecks || (BrowserChecks = {}));
 var Talk;
 (function (Talk) {
     function say(message, locale, callback) {
@@ -17,6 +23,7 @@ var Talk;
         speechSynthesis.speak(msg);
     }
     Talk.say = say;
+    ;
     var Arrays = Array;
     function asyncCheckVoice(check) {
         speechSynthesis.onvoiceschanged = function () {
@@ -32,10 +39,7 @@ var Talk;
         speechSynthesis.cancel();
     }
     Talk.quiet = quiet;
-    function isSpeechSynthesisAvailable() {
-        return (typeof speechSynthesis) !== 'undefined';
-    }
-    Talk.isSpeechSynthesisAvailable = isSpeechSynthesisAvailable;
+    ;
 })(Talk || (Talk = {}));
 var Speech;
 (function (Speech) {
@@ -43,6 +47,9 @@ var Speech;
     var speechRecognitionList = new webkitSpeechGrammarList();
     speechRecognitionList.addFromString(grammar, 1);
     var recognition = null;
+    var DUMMY_CALLBACK = function (argument) { };
+    var onErrorCallback = DUMMY_CALLBACK;
+    var onResultCallback = DUMMY_CALLBACK;
     function abortRecognition() {
         if (recognition !== null) {
             recognition.abort();
@@ -50,7 +57,7 @@ var Speech;
         }
     }
     Speech.abortRecognition = abortRecognition;
-    function initRecognition(locale, onresult) {
+    function startRecognition(locale) {
         abortRecognition();
         recognition = new webkitSpeechRecognition();
         recognition.grammars = speechRecognitionList;
@@ -73,10 +80,24 @@ var Speech;
             if (final_transcript === '') {
                 final_transcript = interim_transcript.trim();
             }
-            onresult(final_transcript);
+            onResultCallback(final_transcript);
+        };
+        recognition.onerror = function (event) {
+            onErrorCallback(event.error);
         };
         recognition.start();
     }
-    Speech.initRecognition = initRecognition;
+    Speech.startRecognition = startRecognition;
+    ;
+    function setOnErrorCallback(callback) {
+        onErrorCallback = callback;
+    }
+    Speech.setOnErrorCallback = setOnErrorCallback;
+    ;
+    function setOnResult(callback) {
+        onResultCallback = callback;
+    }
+    Speech.setOnResult = setOnResult;
+    ;
 })(Speech || (Speech = {}));
 //# sourceMappingURL=speech.js.map

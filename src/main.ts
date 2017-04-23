@@ -9,8 +9,8 @@
 module Params {
 	// default values:
 	export let timesText = "times";
-	export let readLocale = "";
-	export let listenLocale = "";
+	export let outputLocale = "";
+	export let inputLocale = "";
 	export let showHint = true;
 	export let questionMode = 'random';
 
@@ -29,15 +29,15 @@ module Params {
 						showHint = value.toLowerCase() === 'true';
 						break;
 					case 'output-locale':
-						readLocale = value;
+						outputLocale = value;
 						break;
 					case 'input-locale':
-						listenLocale = value;
+						inputLocale = value;
 						break;
 					case 'locale':
 						// sets both at the same time
-						readLocale = value;
-						listenLocale = value;
+						outputLocale = value;
+						inputLocale = value;
 						break;
 					case 'times-text':
 						timesText = value;
@@ -50,8 +50,8 @@ module Params {
 		}
 	}
 
-	export let readQuestions = readLocale !== "" && Talk.isSpeechSynthesisAvailable();
-	export let listenAnswers = listenLocale !== "" && SpeechCheck.isSpeechRecognitionAvailable();
+	export let readQuestions = outputLocale !== "" && BrowserChecks.isSpeechSynthesisAvailable();
+	export let listenAnswers = inputLocale !== "" && BrowserChecks.isSpeechRecognitionAvailable();
 };
 
 module Questions {
@@ -188,24 +188,7 @@ window.onload = function () {
 
 		html_recorded_text.innerHTML = '';
 
-		Speech.initRecognition(
-			Params.listenLocale,
-			function (text: string) {
-				html_recorded_text.innerHTML = "<i>" + text + "</i>";
-
-				// since due to continuous listening we may get multiple words
-				// and because we want the *last* word given, we split by ' '
-				// and then get the last word in that sequence
-				let lastWord: any = text.split(' ');
-				lastWord = lastWord[lastWord.length - 1];
-				// removes all non-number elements
-				const numbersOnly = lastWord.replace(/\D/g, '');
-				if (numbersOnly.length > 0) {
-					updateAttempt(parseInt(numbersOnly));
-					update();
-				}
-			}
-		)
+		Speech.startRecognition(Params.inputLocale);
 	};
 
 	function stopListening() {
@@ -237,7 +220,7 @@ window.onload = function () {
 
 			Talk.say(
 				`${x} ${Params.timesText} ${y}`,
-				Params.readLocale,
+				Params.outputLocale,
 				(event: any) => {
 					// While the question is being red, we may press the
 					// skip question button, causing the speech to end
@@ -256,7 +239,7 @@ window.onload = function () {
 			if (Params.readQuestions) {
 				Talk.say(
 					`${x} ${Params.timesText} ${y}`,
-					Params.readLocale
+					Params.outputLocale
 				);
 			}
 
@@ -356,7 +339,7 @@ window.onload = function () {
 		ProgressTracker.init(window.innerWidth, window.innerHeight, FRACTIONS);
 	};
 
-	// hack to force window initialization although it is not a real resize
+	// FIXME: hack to force window initialization although it is not a real resize
 	window.onresize(null);
 
 	// control fps when using 'requestAnimationFrame'
@@ -534,22 +517,46 @@ window.onload = function () {
 	// === Input === //
 
 	if (Params.listenAnswers) {
+		Speech.setOnResult(
+			function (text: string) {
+				html_recorded_text.innerHTML = "<i>" + text + "</i>";
+
+				// since due to continuous listening we may get multiple words
+				// and because we want the *last* word given, we split by ' '
+				// and then get the last word in that sequence
+				let lastWord: any = text.split(' ');
+				lastWord = lastWord[lastWord.length - 1];
+				// removes all non-number elements
+				const numbersOnly = lastWord.replace(/\D/g, '');
+				if (numbersOnly.length > 0) {
+					updateAttempt(parseInt(numbersOnly));
+					update();
+				}
+			}
+		);
+
+		Speech.setOnErrorCallback(
+			function (error: string) {
+				const icon = '<span class="fa-stack fa-fw"><i class="fa fa-square-o fa-stack-2x"></i>' +
+					'<i class="fa fa-microphone-slash fa-stack-1x" aria-hidden="true"></i></span>';
+				html_input_mode.innerHTML = icon + ' Input error: <i>' + error + '</I>.';
+			}
+		);
+
 		html_input_mode.innerHTML = '<span class="fa-stack fa-fw">' +
 			'<i class="fa fa-square-o fa-stack-2x"></i>' +
-			'<i class="fa fa-microphone fa-stack-1x" aria-hidden="true"></i></span> Input in <b>' + Params.listenLocale + '</b>.';
+			'<i class="fa fa-microphone fa-stack-1x" aria-hidden="true"></i></span> Input in <b>' + Params.inputLocale + '</b>.';
 
 		// force listener restart in case listening failed to start for some reason
 		html_recording_status.title = "Click or press 'spacebar' to force speech recognition restart.";
 		html_recording_status.onclick = forceSpeechRecognitionRestart;
 	} else {
-		if (SpeechCheck.isSpeechRecognitionAvailable()) {
-			html_input_mode.innerHTML = '<span class="fa-stack fa-fw">' +
-				'<i class="fa fa-square-o fa-stack-2x"></i>' +
-				'<i class="fa fa-microphone-slash fa-stack-1x" aria-hidden="true"></i></span> Input disabled.';
+		const icon = '<span class="fa-stack fa-fw"><i class="fa fa-square-o fa-stack-2x"></i>' +
+			'<i class="fa fa-microphone-slash fa-stack-1x" aria-hidden="true"></i></span>';
+		if (BrowserChecks.isSpeechRecognitionAvailable()) {
+			html_input_mode.innerHTML = icon + ' Input disabled.';
 		} else {
-			html_input_mode.innerHTML = '<span class="fa-stack fa-fw">' +
-				'<i class="fa fa-square-o fa-stack-2x"></i>' +
-				'<i class="fa fa-microphone fa-stack-1x" aria-hidden="true"></i></span> Input unavailable.';
+			html_input_mode.innerHTML = icon + ' Input unavailable.';
 		}
 	}
 
@@ -557,21 +564,21 @@ window.onload = function () {
 
 	if (Params.readQuestions) {
 		const icon = '<span class="fa-stack fa-fw"><i class="fa fa-square-o fa-stack-2x"></i><i class="fa fa-volume-up fa-stack-1x"></i></span>';
-		html_output_mode.innerHTML = icon + ' Output in <b>' + Params.readLocale + "</b>.";
+		html_output_mode.innerHTML = icon + ' Output in <b>' + Params.outputLocale + "</b>.";
 
-		Talk.asyncCheckVoice( (voices, defaultVoice) => {
-			const readLocaleVoiceExists = voices.indexOf(Params.readLocale) !== -1;
+		Talk.asyncCheckVoice((voices, defaultVoice) => {
+			const readLocaleVoiceExists = voices.indexOf(Params.outputLocale) !== -1;
 			if (!readLocaleVoiceExists) {
-				html_output_mode.innerHTML = icon + ' Voice <s>' + Params.readLocale + "</s> unavailable. (Click to list.)";
+				html_output_mode.innerHTML = icon + ' Voice <s>' + Params.outputLocale + "</s> unavailable. (Click to list.)";
 				html_output_mode.onclick = function () {
 					html_output_mode.innerHTML = icon + ' Known voices: ' + voices + ".";
 				}
-				console.warn(`Voice ${Params.readLocale} not found. Try one of these voices: ${voices} instead.`);
+				console.warn(`Voice ${Params.outputLocale} not found. Try one of these voices: ${voices} instead.`);
 			}
 		});
 	} else {
 		const icon = '<span class="fa-stack fa-fw"><i class="fa fa-square-o fa-stack-2x"></i><i class="fa fa-volume-off fa-stack-1x"></i></span>';
-		if (Talk.isSpeechSynthesisAvailable()) {
+		if (BrowserChecks.isSpeechSynthesisAvailable()) {
 			html_output_mode.innerHTML = icon + " Output disabled.";
 		} else {
 			html_output_mode.innerHTML = icon + " Output unavailable.";
