@@ -139,22 +139,6 @@ window.onload = function () {
     var questionStartTime = 0;
     var highlightWrongAnswerTimeout = 0;
     var highlightRightAnswerTimeout = 0;
-    function startListening() {
-        html_recording_symbol.innerHTML = '<span class="fa-stack fa-fw">' +
-            '<i class="fa fa-circle-o-notch fa-spin fa-stack-2x green-color"></i>' +
-            '<i class="fa fa-microphone fa-stack-1x" aria-hidden="true"></i></span>';
-        html_recorded_text.innerHTML = '';
-        Speech.startRecognition(Params.inputLocale);
-    }
-    ;
-    function stopListening() {
-        html_recording_symbol.innerHTML = '<span class="fa-stack fa-fw">' +
-            '<i class="fa fa-ban fa-stack-2x red-color"></i>' +
-            '<i class="fa fa-microphone fa-stack-1x" aria-hidden="true"></i></span>';
-        html_recorded_text.innerHTML = '';
-        Speech.abortRecognition();
-    }
-    ;
     function nextQuestion() {
         var _a = multiplicationQuestion(), x = _a[0], y = _a[1];
         var newQuestion = x + ' &times; ' + y;
@@ -163,23 +147,14 @@ window.onload = function () {
             return;
         }
         if (Params.listenAnswers && Params.readQuestions) {
-            stopListening();
-            Talk.say(x + " " + Params.timesText + " " + y, Params.outputLocale, function (event) {
-                if (highlightRightAnswerTimeout === 0) {
-                    startListening();
-                }
-                else {
-                    console.log('denied!!');
-                }
-            });
+            Talk.say(x + " " + Params.timesText + " " + y, Params.outputLocale);
         }
         else {
             if (Params.readQuestions) {
                 Talk.say(x + " " + Params.timesText + " " + y, Params.outputLocale);
             }
             if (Params.listenAnswers) {
-                stopListening();
-                startListening();
+                Speech.startRecognition(Params.inputLocale);
             }
         }
         attempt = '';
@@ -191,7 +166,7 @@ window.onload = function () {
     ;
     function giveUp() {
         if (Params.listenAnswers) {
-            stopListening();
+            Speech.abortRecognition();
         }
         var timeOnQuestion = Date.now() - questionStartTime;
         ProgressTracker.deselect();
@@ -209,8 +184,8 @@ window.onload = function () {
     ;
     function forceSpeechRecognitionRestart() {
         console.log('Forced speech restart!');
-        stopListening();
-        startListening();
+        Speech.abortRecognition();
+        Speech.startRecognition(Params.inputLocale);
     }
     ;
     window.onkeyup = function (e) {
@@ -318,7 +293,7 @@ window.onload = function () {
         html_timer.innerHTML = '<i class="fa fa-clock-o fa-fw" aria-hidden="true"></i> ' + (Math.floor(timeOnQuestion / 1000)) + 's';
         if (attempt === answer) {
             if (Params.listenAnswers) {
-                stopListening();
+                Speech.abortRecognition();
             }
             score += maxScore;
             var color = maxScore > 50 ? ProgressTracker.GREEN : (maxScore <= 10 ? ProgressTracker.RED : ProgressTracker.YELLOW);
@@ -355,22 +330,55 @@ window.onload = function () {
         showGameMode(multiplicationQuestion);
     };
     html_game_mode.title = 'Press to switch between sequential/random modes.';
+    if (Params.listenAnswers && Params.readQuestions) {
+        Talk.onTalkEnd(function () {
+            console.debug("onEnd called for " + question);
+            if (highlightRightAnswerTimeout === 0) {
+                Speech.startRecognition(Params.inputLocale);
+            }
+            else {
+                console.log('On cool off timeout, will not start speech recognition.');
+            }
+        });
+    }
     if (Params.listenAnswers) {
-        Speech.setOnResult(function (text) {
+        function onSpeechResult(text) {
             html_recorded_text.innerHTML = "<i>" + text + "</i>";
             var lastWord = text.split(' ');
             lastWord = lastWord[lastWord.length - 1];
             var numbersOnly = lastWord.replace(/\D/g, '');
             if (numbersOnly.length > 0) {
                 updateAttempt(parseInt(numbersOnly));
-                update();
             }
-        });
-        Speech.setOnErrorCallback(function (error) {
+        }
+        ;
+        function onSpeechError(error) {
             var icon = '<span class="fa-stack fa-fw"><i class="fa fa-square-o fa-stack-2x"></i>' +
                 '<i class="fa fa-microphone-slash fa-stack-1x" aria-hidden="true"></i></span>';
             html_input_mode.innerHTML = icon + ' Input error: <i>' + error + '</I>.';
-        });
+            html_recording_symbol.innerHTML = '';
+            html_recorded_text.innerHTML = '';
+        }
+        ;
+        function onSpeechEnd() {
+            html_recording_symbol.innerHTML = '<span class="fa-stack fa-fw">' +
+                '<i class="fa fa-ban fa-stack-2x red-color"></i>' +
+                '<i class="fa fa-microphone fa-stack-1x" aria-hidden="true"></i></span>';
+            html_recorded_text.innerHTML = '';
+        }
+        ;
+        function onSpeechStart() {
+            html_recording_symbol.innerHTML = '<span class="fa-stack fa-fw">' +
+                '<i class="fa fa-circle-o-notch fa-spin fa-stack-2x green-color"></i>' +
+                '<i class="fa fa-microphone fa-stack-1x" aria-hidden="true"></i></span>';
+            html_recorded_text.innerHTML = '';
+        }
+        ;
+        Speech.setOnResult(onSpeechResult);
+        Speech.setOnError(onSpeechError);
+        Speech.setOnEnd(onSpeechEnd);
+        Speech.setOnStart(onSpeechStart);
+        onSpeechEnd();
         html_input_mode.innerHTML = '<span class="fa-stack fa-fw">' +
             '<i class="fa fa-square-o fa-stack-2x"></i>' +
             '<i class="fa fa-microphone fa-stack-1x" aria-hidden="true"></i></span> Input in <b>' + Params.inputLocale + '</b>.';

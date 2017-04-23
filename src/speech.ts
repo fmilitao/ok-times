@@ -23,6 +23,20 @@ module BrowserChecks {
 }
 
 module Talk {
+    const speechUtterance = new SpeechSynthesisUtterance();
+
+    // only write it on the console, not the UI
+    speechUtterance.onerror = function (event) {
+        console.debug(event);
+    };
+
+    /**
+     * Callback to call when talking ends.
+     */
+    export function onTalkEnd(callback: () => void) {
+        speechUtterance.onend = callback;
+    };
+
     /**
      * Say some message through text-to-speech service.
      * 
@@ -30,21 +44,13 @@ module Talk {
      * @param locale the language of the message
      * @param callback the function to call when the message has been completely spoken.
      */
-    export function say(
-        message: string,
-        locale: string,
-        callback: (event: any) => void = undefined
-    ) {
-        const msg = new SpeechSynthesisUtterance();
-        msg.onend = callback;
-        // msg.onerror
-        // msg.onstart
-        msg.text = message;
-        msg.lang = locale;
+    export function say(message: string, locale: string) {
+        speechUtterance.text = message;
+        speechUtterance.lang = locale;
         // FIXME filter by name instead?
-        // msg.voice for picking the voice.
+        // speechUtterance.voice for picking the voice.
 
-        speechSynthesis.speak(msg);
+        speechSynthesis.speak(speechUtterance);
     };
 
     // The declaration and auxiliary variable are just to get around typescript
@@ -81,11 +87,14 @@ module Speech {
     let recognition: any = null;
 
     // dummy call back that does nothing when called.
-    const DUMMY_CALLBACK = (argument: string) => { /* intentionally empty */ };
+    const DUMMY_CALLBACK = () => { /* intentionally empty */ };
 
     let onErrorCallback: (error: string) => void = DUMMY_CALLBACK;
     let onResultCallback: (result: string) => void = DUMMY_CALLBACK;
+    let onStartCallback: () => void = DUMMY_CALLBACK;
+    let onEndCallback: () => void = DUMMY_CALLBACK;
 
+    export let speechCounter = 0;
     /**
      * Aborts recognition, ignoring the final result if it was not
      * previously returned.
@@ -93,10 +102,15 @@ module Speech {
     export function abortRecognition() {
         // if we have a running recognition abort it immediately.
         if (recognition !== null) {
+            recognition.onresult = DUMMY_CALLBACK;
+            recognition.onerror = DUMMY_CALLBACK;
             recognition.abort();
             recognition = null;
+
+            // to avoid waiting on the old recognition to actually abort.
+            onEndCallback();
         }
-    }
+    };
 
     /**
      * Start speech recognition.
@@ -117,9 +131,17 @@ module Speech {
         recognition.interimResults = true;
         recognition.maxAlternatives = 1;
 
+        speechCounter += 1;
+        const speechCounterId = speechCounter;
+
         // adapted from:
         // https://developers.google.com/web/updates/2013/01/Voice-Driven-Web-Apps-Introduction-to-the-Web-Speech-API
         recognition.onresult = function (event: any) {
+            if (speechCounter !== speechCounterId) {
+                console.warn(`Ignoring old event from ${speechCounterId} current is ${speechCounter}`);
+                return;
+            }
+
             let final_transcript = '';
             let interim_transcript = '';
 
@@ -146,18 +168,23 @@ module Speech {
                 final_transcript = interim_transcript.trim();
             }
             onResultCallback(final_transcript);
-        }
+        };
 
         recognition.onerror = function (event: any) {
             onErrorCallback(event.error);
         };
+
+        recognition.onstart = onStartCallback;
+
+        // we handle the on end event directly instead
+        // recognition.onend = onEndCallback;
         recognition.start();
     };
 
     /**
      * Sets the callback for errors.
      */
-    export function setOnErrorCallback(callback: (error: string) => void) {
+    export function setOnError(callback: (error: string) => void) {
         onErrorCallback = callback;
     };
 
@@ -166,5 +193,19 @@ module Speech {
      */
     export function setOnResult(callback: (result: string) => void) {
         onResultCallback = callback;
+    };
+
+    /**
+     * Sets the callback for when recognition starts.
+     */
+    export function setOnStart(callback: () => void) {
+        onStartCallback = callback;
+    };
+
+    /**
+     * Sets the callback for when recognition stops.
+     */
+    export function setOnEnd(callback: () => void) {
+        onEndCallback = callback;
     };
 }

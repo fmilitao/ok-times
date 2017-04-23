@@ -14,13 +14,19 @@ var BrowserChecks;
 })(BrowserChecks || (BrowserChecks = {}));
 var Talk;
 (function (Talk) {
-    function say(message, locale, callback) {
-        if (callback === void 0) { callback = undefined; }
-        var msg = new SpeechSynthesisUtterance();
-        msg.onend = callback;
-        msg.text = message;
-        msg.lang = locale;
-        speechSynthesis.speak(msg);
+    var speechUtterance = new SpeechSynthesisUtterance();
+    speechUtterance.onerror = function (event) {
+        console.debug(event);
+    };
+    function onTalkEnd(callback) {
+        speechUtterance.onend = callback;
+    }
+    Talk.onTalkEnd = onTalkEnd;
+    ;
+    function say(message, locale) {
+        speechUtterance.text = message;
+        speechUtterance.lang = locale;
+        speechSynthesis.speak(speechUtterance);
     }
     Talk.say = say;
     ;
@@ -47,16 +53,23 @@ var Speech;
     var speechRecognitionList = new webkitSpeechGrammarList();
     speechRecognitionList.addFromString(grammar, 1);
     var recognition = null;
-    var DUMMY_CALLBACK = function (argument) { };
+    var DUMMY_CALLBACK = function () { };
     var onErrorCallback = DUMMY_CALLBACK;
     var onResultCallback = DUMMY_CALLBACK;
+    var onStartCallback = DUMMY_CALLBACK;
+    var onEndCallback = DUMMY_CALLBACK;
+    Speech.speechCounter = 0;
     function abortRecognition() {
         if (recognition !== null) {
+            recognition.onresult = DUMMY_CALLBACK;
+            recognition.onerror = DUMMY_CALLBACK;
             recognition.abort();
             recognition = null;
+            onEndCallback();
         }
     }
     Speech.abortRecognition = abortRecognition;
+    ;
     function startRecognition(locale) {
         abortRecognition();
         recognition = new webkitSpeechRecognition();
@@ -65,7 +78,13 @@ var Speech;
         recognition.continuous = true;
         recognition.interimResults = true;
         recognition.maxAlternatives = 1;
+        Speech.speechCounter += 1;
+        var speechCounterId = Speech.speechCounter;
         recognition.onresult = function (event) {
+            if (Speech.speechCounter !== speechCounterId) {
+                console.warn("Ignoring old event from " + speechCounterId + " current is " + Speech.speechCounter);
+                return;
+            }
             var final_transcript = '';
             var interim_transcript = '';
             for (var i = event.resultIndex; i < event.results.length; ++i) {
@@ -85,19 +104,30 @@ var Speech;
         recognition.onerror = function (event) {
             onErrorCallback(event.error);
         };
+        recognition.onstart = onStartCallback;
         recognition.start();
     }
     Speech.startRecognition = startRecognition;
     ;
-    function setOnErrorCallback(callback) {
+    function setOnError(callback) {
         onErrorCallback = callback;
     }
-    Speech.setOnErrorCallback = setOnErrorCallback;
+    Speech.setOnError = setOnError;
     ;
     function setOnResult(callback) {
         onResultCallback = callback;
     }
     Speech.setOnResult = setOnResult;
+    ;
+    function setOnStart(callback) {
+        onStartCallback = callback;
+    }
+    Speech.setOnStart = setOnStart;
+    ;
+    function setOnEnd(callback) {
+        onEndCallback = callback;
+    }
+    Speech.setOnEnd = setOnEnd;
     ;
 })(Speech || (Speech = {}));
 //# sourceMappingURL=speech.js.map

@@ -181,26 +181,6 @@ window.onload = function () {
 	let highlightWrongAnswerTimeout = 0;
 	let highlightRightAnswerTimeout = 0;
 
-	function startListening() {
-		html_recording_symbol.innerHTML = '<span class="fa-stack fa-fw">' +
-			'<i class="fa fa-circle-o-notch fa-spin fa-stack-2x green-color"></i>' +
-			'<i class="fa fa-microphone fa-stack-1x" aria-hidden="true"></i></span>';
-
-		html_recorded_text.innerHTML = '';
-
-		Speech.startRecognition(Params.inputLocale);
-	};
-
-	function stopListening() {
-		html_recording_symbol.innerHTML = '<span class="fa-stack fa-fw">' +
-			'<i class="fa fa-ban fa-stack-2x red-color"></i>' +
-			'<i class="fa fa-microphone fa-stack-1x" aria-hidden="true"></i></span>';
-
-		html_recorded_text.innerHTML = '';
-
-		Speech.abortRecognition();
-	};
-
 	function nextQuestion() {
 		const [x, y] = multiplicationQuestion();
 		const newQuestion = x + ' &times; ' + y;
@@ -216,23 +196,9 @@ window.onload = function () {
 
 		// read and listen
 		if (Params.listenAnswers && Params.readQuestions) {
-			stopListening();
-
 			Talk.say(
 				`${x} ${Params.timesText} ${y}`,
-				Params.outputLocale,
-				(event: any) => {
-					// While the question is being red, we may press the
-					// skip question button, causing the speech to end
-					// but then we do not want to listen to the answer.
-					// Thus, we check that no timeout was placed.
-					if (highlightRightAnswerTimeout === 0) {
-						// only start recognition after speech ended
-						startListening();
-					} else {
-						console.log('denied!!');
-					}
-				}
+				Params.outputLocale
 			);
 		} else {
 			// read-only
@@ -245,8 +211,7 @@ window.onload = function () {
 
 			// listen-only
 			if (Params.listenAnswers) {
-				stopListening();
-				startListening();
+				Speech.startRecognition(Params.inputLocale);
 			}
 		}
 
@@ -265,7 +230,7 @@ window.onload = function () {
 
 	function giveUp() {
 		if (Params.listenAnswers) {
-			stopListening();
+			Speech.abortRecognition();
 		}
 
 		const timeOnQuestion = Date.now() - questionStartTime;
@@ -287,8 +252,8 @@ window.onload = function () {
 
 	function forceSpeechRecognitionRestart() {
 		console.log('Forced speech restart!');
-		stopListening();
-		startListening();
+		Speech.abortRecognition();
+		Speech.startRecognition(Params.inputLocale);
 	};
 
 	window.onkeyup = function (e: KeyboardEvent) {
@@ -460,7 +425,7 @@ window.onload = function () {
 		if (attempt === answer) {
 			// immediately stop listening
 			if (Params.listenAnswers) {
-				stopListening();
+				Speech.abortRecognition();
 			}
 			score += maxScore;
 
@@ -516,32 +481,76 @@ window.onload = function () {
 
 	// === Input === //
 
-	if (Params.listenAnswers) {
-		Speech.setOnResult(
-			function (text: string) {
-				html_recorded_text.innerHTML = "<i>" + text + "</i>";
+	if (Params.listenAnswers && Params.readQuestions) {
+		Talk.onTalkEnd(
+			() => {
+				console.debug(`onEnd called for ${question}`);
 
-				// since due to continuous listening we may get multiple words
-				// and because we want the *last* word given, we split by ' '
-				// and then get the last word in that sequence
-				let lastWord: any = text.split(' ');
-				lastWord = lastWord[lastWord.length - 1];
-				// removes all non-number elements
-				const numbersOnly = lastWord.replace(/\D/g, '');
-				if (numbersOnly.length > 0) {
-					updateAttempt(parseInt(numbersOnly));
-					update();
+				// While the question is being red, we may press the
+				// skip question button, causing the speech to end
+				// but then we do not want to listen to the answer.
+				// Thus, we check that no timeout was placed.
+				if (highlightRightAnswerTimeout === 0) {
+					// only start recognition after speech ended
+					Speech.startRecognition(Params.inputLocale);
+				} else {
+					console.log('On cool off timeout, will not start speech recognition.');
 				}
 			}
 		);
+	}
 
-		Speech.setOnErrorCallback(
-			function (error: string) {
-				const icon = '<span class="fa-stack fa-fw"><i class="fa fa-square-o fa-stack-2x"></i>' +
-					'<i class="fa fa-microphone-slash fa-stack-1x" aria-hidden="true"></i></span>';
-				html_input_mode.innerHTML = icon + ' Input error: <i>' + error + '</I>.';
+	if (Params.listenAnswers) {
+		function onSpeechResult(text: string) {
+			html_recorded_text.innerHTML = "<i>" + text + "</i>";
+
+			// since due to continuous listening we may get multiple words
+			// and because we want the *last* word given, we split by ' '
+			// and then get the last word in that sequence
+			let lastWord: any = text.split(' ');
+			lastWord = lastWord[lastWord.length - 1];
+			// removes all non-number elements
+			const numbersOnly = lastWord.replace(/\D/g, '');
+			if (numbersOnly.length > 0) {
+				updateAttempt(parseInt(numbersOnly));
+				// let the regular update cycle handle it
+				// update();
 			}
-		);
+		};
+
+		function onSpeechError(error: string) {
+			const icon = '<span class="fa-stack fa-fw"><i class="fa fa-square-o fa-stack-2x"></i>' +
+				'<i class="fa fa-microphone-slash fa-stack-1x" aria-hidden="true"></i></span>';
+
+			html_input_mode.innerHTML = icon + ' Input error: <i>' + error + '</I>.';
+
+			html_recording_symbol.innerHTML = '';
+			html_recorded_text.innerHTML = '';
+		};
+
+		function onSpeechEnd() {
+			html_recording_symbol.innerHTML = '<span class="fa-stack fa-fw">' +
+				'<i class="fa fa-ban fa-stack-2x red-color"></i>' +
+				'<i class="fa fa-microphone fa-stack-1x" aria-hidden="true"></i></span>';
+
+			html_recorded_text.innerHTML = '';
+		};
+
+		function onSpeechStart() {
+			html_recording_symbol.innerHTML = '<span class="fa-stack fa-fw">' +
+				'<i class="fa fa-circle-o-notch fa-spin fa-stack-2x green-color"></i>' +
+				'<i class="fa fa-microphone fa-stack-1x" aria-hidden="true"></i></span>';
+
+			html_recorded_text.innerHTML = '';
+		};
+
+		Speech.setOnResult(onSpeechResult);
+		Speech.setOnError(onSpeechError);
+		Speech.setOnEnd(onSpeechEnd);
+		Speech.setOnStart(onSpeechStart);
+
+		// initial setup
+		onSpeechEnd();
 
 		html_input_mode.innerHTML = '<span class="fa-stack fa-fw">' +
 			'<i class="fa fa-square-o fa-stack-2x"></i>' +
