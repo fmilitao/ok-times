@@ -47,15 +47,13 @@ Finally, there are also a few URL parameters:
 
 ## Know Issues
 
-* *Sometimes speech recognition does not start correctly!* If that happens just click the "(Not listening.)" text and speech recognition should be restated... which hopefully fixes the problem.
+* *Sometimes speech recognition does not start correctly.* If that happens just click the microphone symbol text and speech recognition should be restated. The problem appears to be that, in some situations, `SpeechSynthesisUtterance.onend` is not called which then causes the game to not change speech recognition state to listening.
 * If speech recognition happens to merge several numbers together by mistake, you should try to say some non-number word (like 'and') to help speech recognition separate the numbers. Only the number said last is considered by the game.
-* For some reason, rendering SVGs with blur in Firefox is horribly slow.
 * Speech recognition only works in Chrome.
 * Speech recognition is off while speech synthesis is speaking, so you will have to wait until speech synthesis ends before you can answer. (But the score timers will not wait for this.) This pause is done to avoid the speech synthesis output to be used in speech recognition. If this becomes a problem, you can just turn off speech synthesis.
-* [List of Google speech recognition languages](https://cloud.google.com/speech/docs/languages).
 
 ## Extra Credits
 
 * Uses the awesome [Font Awesome](http://fontawesome.io/) for icons.
 * [Google Developers blog post](https://developers.google.com/web/updates/2013/01/Voice-Driven-Web-Apps-Introduction-to-the-Web-Speech-API) on using web speech API.
-
+* [List of Google speech recognition languages](https://cloud.google.com/speech/docs/languages).
