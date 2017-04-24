@@ -10,6 +10,7 @@ module Params {
 	// default values:
 	export let timesText = "times";
 	export let outputLocale = "";
+	export let isOutputVoice = false;
 	export let inputLocale = "";
 	export let showHint = true;
 	export let questionMode = 'random';
@@ -30,6 +31,17 @@ module Params {
 						break;
 					case 'output-locale':
 						outputLocale = value;
+						isOutputVoice = false;
+						break;
+					case 'output-voice':
+						try {
+							// try to parse the voice
+							const outputVoice = JSON.parse(decodeURIComponent(value));
+							outputLocale = outputVoice;
+							isOutputVoice = true;
+						} catch (error) {
+							console.error(error);
+						}
 						break;
 					case 'input-locale':
 						inputLocale = value;
@@ -196,17 +208,11 @@ window.onload = function () {
 
 		// read and listen
 		if (Params.listenAnswers && Params.readQuestions) {
-			Talk.say(
-				`${x} ${Params.timesText} ${y}`,
-				Params.outputLocale
-			);
+			Talk.say(`${x} ${Params.timesText} ${y}`);
 		} else {
 			// read-only
 			if (Params.readQuestions) {
-				Talk.say(
-					`${x} ${Params.timesText} ${y}`,
-					Params.outputLocale
-				);
+				Talk.say(`${x} ${Params.timesText} ${y}`);
 			}
 
 			// listen-only
@@ -479,13 +485,32 @@ window.onload = function () {
 	};
 	html_game_mode.title = 'Press to switch between sequential/random modes.'
 
+	html_attempt.onclick = giveUp;
+	html_attempt.title = "Press to give up";
+
+
+	// === Initial Status === //
+
+	// void callbacks calling 'gameStart' more than once.
+	let gameStarted = false;
+	function gameStart() {
+		if (!gameStarted) {
+			gameStarted = true;
+			showHint(showHintAfterSomeTime);
+			showGameMode(multiplicationQuestion);
+
+			// get the initial question
+			nextQuestion();
+			// 10 fps ought to be enough
+			loop(10, update);
+		}
+	};
+
 	// === Input === //
 
 	if (Params.listenAnswers && Params.readQuestions) {
 		Talk.onTalkEnd(
 			() => {
-				console.debug(`onEnd called for ${question}`);
-
 				// While the question is being red, we may press the
 				// skip question button, causing the speech to end
 				// but then we do not want to listen to the answer.
@@ -523,6 +548,7 @@ window.onload = function () {
 				'<i class="fa fa-microphone-slash fa-stack-1x" aria-hidden="true"></i></span>';
 
 			html_input_mode.innerHTML = icon + ' Input error: <i>' + error + '</I>.';
+			html_input_mode.style.color = "red";
 
 			html_recording_symbol.innerHTML = '';
 			html_recorded_text.innerHTML = '';
@@ -573,18 +599,39 @@ window.onload = function () {
 
 	if (Params.readQuestions) {
 		const icon = '<span class="fa-stack fa-fw"><i class="fa fa-square-o fa-stack-2x"></i><i class="fa fa-volume-up fa-stack-1x"></i></span>';
-		html_output_mode.innerHTML = icon + ' Output in <b>' + Params.outputLocale + "</b>.";
+		html_output_mode.innerHTML = icon + ' Setting up output...';
 
-		Talk.asyncCheckVoice((voices, defaultVoice) => {
-			const readLocaleVoiceExists = voices.indexOf(Params.outputLocale) !== -1;
+		Talk.asyncCheckVoice(voices => {
+			let targetVoice = Params.isOutputVoice ?
+				voices.filter(voice => voice.name === Params.outputLocale) :
+				voices.filter(voice => voice.lang === Params.outputLocale);
+
+			if (targetVoice.length <= 0 && !Params.isOutputVoice) {
+				// trim the first two chars of the language and try that!
+				const lang = Params.outputLocale.substr(0, 2);
+				targetVoice = voices.filter(voice => voice.lang.substr(0, 2) === lang)
+			}
+
+			const readLocaleVoiceExists = targetVoice.length > 0;
+
 			if (!readLocaleVoiceExists) {
+				const prettyVoices = voices.map(voice => `${voice.name} (${voice.lang})`);
 				html_output_mode.innerHTML = icon + ' Voice <s>' + Params.outputLocale + "</s> unavailable. (Click to list.)";
 				html_output_mode.onclick = function () {
-					html_output_mode.innerHTML = icon + ' Known voices: ' + voices + ".";
+					html_output_mode.innerHTML = icon + ' Known voices: ' + prettyVoices + ".";
 				}
-				console.warn(`Voice ${Params.outputLocale} not found. Try one of these voices: ${voices} instead.`);
+				console.warn(`Voice ${Params.outputLocale} not found. Try one of these voices: ${prettyVoices} instead.`);
+			} else {
+				const finalVoice = targetVoice[0];
+				Talk.setVoice(finalVoice);
+				html_output_mode.innerHTML = icon + ` Voice is <b>${finalVoice.name} (${finalVoice.lang})</b>.`;
 			}
+
+			gameStart();
 		});
+
+		// intentionally return early to not start the game before loading the voice.
+		return;
 	} else {
 		const icon = '<span class="fa-stack fa-fw"><i class="fa fa-square-o fa-stack-2x"></i><i class="fa fa-volume-off fa-stack-1x"></i></span>';
 		if (BrowserChecks.isSpeechSynthesisAvailable()) {
@@ -594,13 +641,6 @@ window.onload = function () {
 		}
 	}
 
-	// === Initial Status === //
+	gameStart();
 
-	showHint(showHintAfterSomeTime);
-	showGameMode(multiplicationQuestion);
-
-	// get the initial question
-	nextQuestion();
-	// 10 fps ought to be enough
-	loop(10, update);
 };

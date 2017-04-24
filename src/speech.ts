@@ -37,6 +37,10 @@ module Talk {
         speechUtterance.onend = callback;
     };
 
+    export function setVoice(voice: SpeechSynthesisVoice) {
+        speechUtterance.voice = voice;
+    };
+
     /**
      * Say some message through text-to-speech service.
      * 
@@ -44,28 +48,14 @@ module Talk {
      * @param locale the language of the message
      * @param callback the function to call when the message has been completely spoken.
      */
-    export function say(message: string, locale: string) {
+    export function say(message: string) {
         speechUtterance.text = message;
-        speechUtterance.lang = locale;
-        // FIXME filter by name instead?
-        // speechUtterance.voice for picking the voice.
-
         speechSynthesis.speak(speechUtterance);
     };
 
-    // The declaration and auxiliary variable are just to get around typescript
-    // not knowing about ES6 features. Since we want to use them, this will effectively
-    // quiet the compiler for the uses we make of 'Set' and 'Array.from'.
-    declare const Set: any;
-    const Arrays: any = Array;
-
-    export function asyncCheckVoice(check: (voices: string[], defaultVoice: string) => void) {
+    export function asyncCheckVoice(check: (voices: SpeechSynthesisVoice[]) => void) {
         speechSynthesis.onvoiceschanged = function () {
-            const voices = speechSynthesis.getVoices();
-            const voicesLangs = voices.map(x => x.lang);
-            const defaultVoice = voices.filter(x => x.default).map(x => x.lang)[0];
-
-            check(Arrays.from(new Set(voicesLangs).values()), defaultVoice);
+            check(speechSynthesis.getVoices());
         };
     };
 

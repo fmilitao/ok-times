@@ -2,6 +2,7 @@ var Params;
 (function (Params) {
     Params.timesText = "times";
     Params.outputLocale = "";
+    Params.isOutputVoice = false;
     Params.inputLocale = "";
     Params.showHint = true;
     Params.questionMode = 'random';
@@ -21,6 +22,17 @@ var Params;
                         break;
                     case 'output-locale':
                         Params.outputLocale = value;
+                        Params.isOutputVoice = false;
+                        break;
+                    case 'output-voice':
+                        try {
+                            var outputVoice = JSON.parse(decodeURIComponent(value));
+                            Params.outputLocale = outputVoice;
+                            Params.isOutputVoice = true;
+                        }
+                        catch (error) {
+                            console.error(error);
+                        }
                         break;
                     case 'input-locale':
                         Params.inputLocale = value;
@@ -147,11 +159,11 @@ window.onload = function () {
             return;
         }
         if (Params.listenAnswers && Params.readQuestions) {
-            Talk.say(x + " " + Params.timesText + " " + y, Params.outputLocale);
+            Talk.say(x + " " + Params.timesText + " " + y);
         }
         else {
             if (Params.readQuestions) {
-                Talk.say(x + " " + Params.timesText + " " + y, Params.outputLocale);
+                Talk.say(x + " " + Params.timesText + " " + y);
             }
             if (Params.listenAnswers) {
                 Speech.startRecognition(Params.inputLocale);
@@ -330,9 +342,21 @@ window.onload = function () {
         showGameMode(multiplicationQuestion);
     };
     html_game_mode.title = 'Press to switch between sequential/random modes.';
+    html_attempt.onclick = giveUp;
+    html_attempt.title = "Press to give up";
+    var gameStarted = false;
+    function gameStart() {
+        if (!gameStarted) {
+            gameStarted = true;
+            showHint(showHintAfterSomeTime);
+            showGameMode(multiplicationQuestion);
+            nextQuestion();
+            loop(10, update);
+        }
+    }
+    ;
     if (Params.listenAnswers && Params.readQuestions) {
         Talk.onTalkEnd(function () {
-            console.debug("onEnd called for " + question);
             if (highlightRightAnswerTimeout === 0) {
                 Speech.startRecognition(Params.inputLocale);
             }
@@ -356,6 +380,7 @@ window.onload = function () {
             var icon = '<span class="fa-stack fa-fw"><i class="fa fa-square-o fa-stack-2x"></i>' +
                 '<i class="fa fa-microphone-slash fa-stack-1x" aria-hidden="true"></i></span>';
             html_input_mode.innerHTML = icon + ' Input error: <i>' + error + '</I>.';
+            html_input_mode.style.color = "red";
             html_recording_symbol.innerHTML = '';
             html_recorded_text.innerHTML = '';
         }
@@ -397,17 +422,32 @@ window.onload = function () {
     }
     if (Params.readQuestions) {
         var icon_1 = '<span class="fa-stack fa-fw"><i class="fa fa-square-o fa-stack-2x"></i><i class="fa fa-volume-up fa-stack-1x"></i></span>';
-        html_output_mode.innerHTML = icon_1 + ' Output in <b>' + Params.outputLocale + "</b>.";
-        Talk.asyncCheckVoice(function (voices, defaultVoice) {
-            var readLocaleVoiceExists = voices.indexOf(Params.outputLocale) !== -1;
+        html_output_mode.innerHTML = icon_1 + ' Setting up output...';
+        Talk.asyncCheckVoice(function (voices) {
+            var targetVoice = Params.isOutputVoice ?
+                voices.filter(function (voice) { return voice.name === Params.outputLocale; }) :
+                voices.filter(function (voice) { return voice.lang === Params.outputLocale; });
+            if (targetVoice.length <= 0 && !Params.isOutputVoice) {
+                var lang_1 = Params.outputLocale.substr(0, 2);
+                targetVoice = voices.filter(function (voice) { return voice.lang.substr(0, 2) === lang_1; });
+            }
+            var readLocaleVoiceExists = targetVoice.length > 0;
             if (!readLocaleVoiceExists) {
+                var prettyVoices_1 = voices.map(function (voice) { return voice.name + " (" + voice.lang + ")"; });
                 html_output_mode.innerHTML = icon_1 + ' Voice <s>' + Params.outputLocale + "</s> unavailable. (Click to list.)";
                 html_output_mode.onclick = function () {
-                    html_output_mode.innerHTML = icon_1 + ' Known voices: ' + voices + ".";
+                    html_output_mode.innerHTML = icon_1 + ' Known voices: ' + prettyVoices_1 + ".";
                 };
-                console.warn("Voice " + Params.outputLocale + " not found. Try one of these voices: " + voices + " instead.");
+                console.warn("Voice " + Params.outputLocale + " not found. Try one of these voices: " + prettyVoices_1 + " instead.");
             }
+            else {
+                var finalVoice = targetVoice[0];
+                Talk.setVoice(finalVoice);
+                html_output_mode.innerHTML = icon_1 + (" Voice is <b>" + finalVoice.name + " (" + finalVoice.lang + ")</b>.");
+            }
+            gameStart();
         });
+        return;
     }
     else {
         var icon = '<span class="fa-stack fa-fw"><i class="fa fa-square-o fa-stack-2x"></i><i class="fa fa-volume-off fa-stack-1x"></i></span>';
@@ -418,9 +458,6 @@ window.onload = function () {
             html_output_mode.innerHTML = icon + " Output unavailable.";
         }
     }
-    showHint(showHintAfterSomeTime);
-    showGameMode(multiplicationQuestion);
-    nextQuestion();
-    loop(10, update);
+    gameStart();
 };
 //# sourceMappingURL=main.js.map

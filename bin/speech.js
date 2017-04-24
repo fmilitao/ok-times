@@ -23,20 +23,20 @@ var Talk;
     }
     Talk.onTalkEnd = onTalkEnd;
     ;
-    function say(message, locale) {
+    function setVoice(voice) {
+        speechUtterance.voice = voice;
+    }
+    Talk.setVoice = setVoice;
+    ;
+    function say(message) {
         speechUtterance.text = message;
-        speechUtterance.lang = locale;
         speechSynthesis.speak(speechUtterance);
     }
     Talk.say = say;
     ;
-    var Arrays = Array;
     function asyncCheckVoice(check) {
         speechSynthesis.onvoiceschanged = function () {
-            var voices = speechSynthesis.getVoices();
-            var voicesLangs = voices.map(function (x) { return x.lang; });
-            var defaultVoice = voices.filter(function (x) { return x.default; }).map(function (x) { return x.lang; })[0];
-            check(Arrays.from(new Set(voicesLangs).values()), defaultVoice);
+            check(speechSynthesis.getVoices());
         };
     }
     Talk.asyncCheckVoice = asyncCheckVoice;

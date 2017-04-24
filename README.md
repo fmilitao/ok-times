@@ -10,7 +10,7 @@ Links for convenient game modes (speech output and input may not be available on
 
 * [Voice mode - US English](http://fmilitao.github.io/ok-times/?locale=en-US) - speech synthesis and recognition ON using 'US English'.
 
-* [Voice mode - Portuguese](http://fmilitao.github.io/ok-times/?locale=pt-PT&times-text=vezes) - speech synthesis and recognition ON using 'Portuguese'.
+* [Voice mode - Portuguese](http://fmilitao.github.io/ok-times/?locale=pt-PT&times-text=vezes) - speech synthesis and recognition ON using 'Portuguese'. Alternatively, you can use [Google servers to output in Portuguese](http://fmilitao.github.io/ok-times/?locale=pt-PT&times-text=vezes&output-voice=%22Google%20portugu%C3%AAs%20do%20Brasil%22).
 
 ## Details
 
@@ -38,6 +38,7 @@ Additional key bindings exist for convenience:
 Finally, there are also a few URL parameters:
 
 * `output-locale` - the locale for _speech synthesis_. If not provided, speech synthesis will be off. (example: `en-US`, `pt-PT`).
+* `output-voice` - instead of giving an `output-locale` you can pick a specific voice, if you know the voice you want.
 * `input-locale` - the locale for speech recognition. If not provided, speech recognition will be off. (example: `en-US`, `pt-PT`).
 * `locale` - sets both locales for speech synthesis and recognition, at the same time.
 * `mode` - game mode can be either `sequential` or `random`. Default: `random`.
