@@ -6,11 +6,11 @@ An okay way to practice the times table, with questions ranging from 2 to 12.
 
 Links for convenient game modes (speech output and input may not be available on all browsers and operating systems):
 
-* [Simple mode](http://fmilitao.github.io/ok-times/) - sound off, only keyboard as input.
+* [Simple mode](https://fmilitao.github.io/ok-times/) - sound off, only keyboard as input.
 
-* [Voice mode - US English](http://fmilitao.github.io/ok-times/?locale=en-US) - speech synthesis and recognition ON using 'US English'.
+* [Voice mode - US English](https://fmilitao.github.io/ok-times/?locale=en-US) - speech synthesis and recognition ON using 'US English'.
 
-* [Voice mode - Portuguese](http://fmilitao.github.io/ok-times/?locale=pt-PT&times-text=vezes) - speech synthesis and recognition ON using 'Portuguese'. Alternatively, you can use [Google servers to output in Portuguese](http://fmilitao.github.io/ok-times/?locale=pt-PT&times-text=vezes&output-voice=%22Google%20portugu%C3%AAs%20do%20Brasil%22).
+* [Voice mode - Portuguese](https://fmilitao.github.io/ok-times/?locale=pt-PT&times-text=vezes) - speech synthesis and recognition ON using 'Portuguese'. Alternatively, you can use [Google servers to output in Portuguese](https://fmilitao.github.io/ok-times/?locale=pt-PT&times-text=vezes&output-voice=%22Google%20portugu%C3%AAs%20do%20Brasil%22).
 
 ## Details
 
