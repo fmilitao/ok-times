@@ -616,6 +616,7 @@ window.onload = function () {
 
 			if (!readLocaleVoiceExists) {
 				const prettyVoices = voices.map(voice => `${voice.name} (${voice.lang})`);
+				html_output_mode.style.color = "red";
 				html_output_mode.innerHTML = icon + ' Voice <s>' + Params.outputLocale + "</s> unavailable. (Click to list.)";
 				html_output_mode.onclick = function () {
 					html_output_mode.innerHTML = icon + ' Known voices: ' + prettyVoices + ".";

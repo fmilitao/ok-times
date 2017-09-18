@@ -434,6 +434,7 @@ window.onload = function () {
             var readLocaleVoiceExists = targetVoice.length > 0;
             if (!readLocaleVoiceExists) {
                 var prettyVoices_1 = voices.map(function (voice) { return voice.name + " (" + voice.lang + ")"; });
+                html_output_mode.style.color = "red";
                 html_output_mode.innerHTML = icon_1 + ' Voice <s>' + Params.outputLocale + "</s> unavailable. (Click to list.)";
                 html_output_mode.onclick = function () {
                     html_output_mode.innerHTML = icon_1 + ' Known voices: ' + prettyVoices_1 + ".";
